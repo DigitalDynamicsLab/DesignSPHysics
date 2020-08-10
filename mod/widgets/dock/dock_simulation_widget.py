@@ -111,13 +111,17 @@ class DockSimulationWidget(QtGui.QWidget):
         # Launch simulation and watch filesystem to monitor simulation
         filelist = [f for f in os.listdir(Case.the().path + "/" + Case.the().name + "_out/") if f.startswith("Part")]
         for f in filelist:
-            os.remove(Case.the().path + "/" + Case.the().name + "_out/" + f)
+            if not os.path.isdir(Case.the().path + "/" + Case.the().name + "_out/" + f):
+                os.remove(Case.the().path + "/" + Case.the().name + "_out/" + f)
 
         def on_dsph_sim_finished(exit_code):
             """ Simulation finish handler. Defines what happens when the process finishes."""
 
             # Reads output and completes the progress bar
-            output = str(process.readAllStandardOutput().data(), encoding='utf-8')
+            try:
+                output = str(process.readAllStandardOutput().data(), encoding='utf-8')
+            except UnicodeDecodeError:
+                output = str(process.readAllStandardOutput().data(), encoding='latin1')
 
             run_dialog.set_detail_text(str(output))
             run_dialog.run_complete()
