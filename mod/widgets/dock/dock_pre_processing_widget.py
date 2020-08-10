@@ -27,7 +27,7 @@ from mod.widgets.case_summary import CaseSummary
 
 from mod.dataobjects.case import Case
 from mod.dataobjects.simulation_object import SimulationObject
-
+from mod.dataobjects.nn_parameters_wizard import NNParametersWizard
 
 class DockPreProcessingWidget(QtGui.QWidget):
     """DesignSPHysics Dock Pre Processing Widget """
@@ -227,7 +227,10 @@ class DockPreProcessingWidget(QtGui.QWidget):
         debug("Executing -> {}".format(cmd_string))
         process.waitForFinished()
 
-        output = str(process.readAllStandardOutput().data(), encoding='utf-8')
+        try:
+            output = str(process.readAllStandardOutput().data(), encoding='utf-8')
+        except UnicodeDecodeError:
+            output = str(process.readAllStandardOutput().data(), encoding='latin1')
 
         if process.exitCode():
             Case.the().info.is_gencase_done = False
@@ -237,6 +240,8 @@ class DockPreProcessingWidget(QtGui.QWidget):
                 total_particles_text = output[output.index("Total particles: "):output.index(" (bound=")]
                 total_particles = int(total_particles_text[total_particles_text.index(": ") + 2:])
                 Case.the().info.particle_number = total_particles
+                if Case.the().executable_paths.dsphysics.find('NNewtonian') != -1:
+                   NNParametersWizard().update_nn_parameters()
                 GencaseCompletedDialog(particle_count=total_particles, detail_text=output, cmd_string=cmd_string, parent=get_fc_main_window()).show()
                 Case.the().info.is_gencase_done = True
                 self.on_save_case()
@@ -248,7 +253,7 @@ class DockPreProcessingWidget(QtGui.QWidget):
 
         # Refresh widget enable/disable status as GenCase finishes
         self.gencase_completed.emit(Case.the().info.is_gencase_done)
-
+        
     def on_newdoc_menu(self, action):
         """ Handles the new document button and its dropdown items. """
         if __("New") in action.text():
