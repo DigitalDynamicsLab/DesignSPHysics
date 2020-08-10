@@ -31,7 +31,7 @@ def partvtk_export(options, case, post_processing_widget) -> None:
 
     # Build parameters
     executable_parameters = ["-dirin {}".format(case.get_out_folder_path()),
-                             "{save_flag} {out_path}{file_name}".format(save_flag=save_flag, out_path=case.get_out_folder_path(), file_name=options["file_name"]),
+                             "{save_flag} {out_path}/{file_name}/{file_name}".format(save_flag=save_flag, out_path=case.get_out_folder_path(), file_name=options["file_name"]),
                              "-onlytype:{save_types} {additional}".format(save_types=options["save_types"], additional=options["additional_parameters"])]
 
     # Information ready handler.
@@ -255,7 +255,7 @@ def isosurface_export(options, case, post_processing_widget) -> None:
 
     # Build parameters
     executable_parameters = ["-dirin {out_path}".format(out_path=case.get_out_folder_path()),
-                             "{surface_or_slice} {out_path}{file_name}".format(surface_or_slice=options["surface_or_slice"], out_path=case.get_out_folder_path(), file_name=options["file_name"]),
+                             "{surface_or_slice} {out_path}/{file_name}/{file_name}".format(surface_or_slice=options["surface_or_slice"], out_path=case.get_out_folder_path(), file_name=options["file_name"]),
                              options["additional_parameters"]]
 
     def on_stdout_ready():
