@@ -13,6 +13,7 @@ from mod.widgets.postprocessing.floatinginfo_dialog import FloatingInfoDialog
 from mod.widgets.postprocessing.measuretool_dialog import MeasureToolDialog
 from mod.widgets.postprocessing.isosurface_dialog import IsoSurfaceDialog
 from mod.widgets.postprocessing.flowtool_dialog import FlowToolDialog
+from mod.widgets.postprocessing.mixingtool_dialog import MixingToolDialog
 
 
 class DockPostProcessingWidget(QtGui.QWidget):
@@ -37,6 +38,7 @@ class DockPostProcessingWidget(QtGui.QWidget):
         self.floatinginfo_button = QtGui.QPushButton(__("FloatingInfo"))
         self.measuretool_button = QtGui.QPushButton(__("MeasureTool"))
         self.flowtool_button = QtGui.QPushButton(__("FlowTool"))
+        self.mixingtool_button = QtGui.QPushButton(__("MixingTool"))
 
         self.partvtk_button.setToolTip(__("Opens the PartVTK tool."))
         self.computeforces_button.setToolTip(__("Opens the ComputeForces tool."))
@@ -44,6 +46,7 @@ class DockPostProcessingWidget(QtGui.QWidget):
         self.measuretool_button.setToolTip(__("Opens the MeasureTool tool."))
         self.isosurface_button.setToolTip(__("Opens the IsoSurface tool."))
         self.flowtool_button.setToolTip(__("Opens the FlowTool tool."))
+        self.flowtool_button.setToolTip(__("Opens the MixingTool tool."))
 
         self.partvtk_button.clicked.connect(lambda: PartVTKDialog(self, parent=get_fc_main_window()))
         self.computeforces_button.clicked.connect(lambda: ComputeForcesDialog(self, parent=get_fc_main_window()))
@@ -51,6 +54,7 @@ class DockPostProcessingWidget(QtGui.QWidget):
         self.measuretool_button.clicked.connect(lambda: MeasureToolDialog(self, parent=get_fc_main_window()))
         self.isosurface_button.clicked.connect(lambda: IsoSurfaceDialog(self, parent=get_fc_main_window()))
         self.flowtool_button.clicked.connect(lambda: FlowToolDialog(self, parent=get_fc_main_window()))
+        self.mixingtool_button.clicked.connect(lambda: MixingToolDialog(self, parent=get_fc_main_window()))
 
         self.main_layout.addWidget(self.title_label)
         self.first_row_layout.addWidget(self.partvtk_button)
@@ -59,6 +63,7 @@ class DockPostProcessingWidget(QtGui.QWidget):
         self.second_row_layout.addWidget(self.floatinginfo_button)
         self.second_row_layout.addWidget(self.measuretool_button)
         self.second_row_layout.addWidget(self.flowtool_button)
+        self.second_row_layout.addWidget(self.mixingtool_button)
 
         self.main_layout.addLayout(self.first_row_layout)
         self.main_layout.addLayout(self.second_row_layout)
