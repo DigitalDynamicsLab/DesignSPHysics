@@ -4,7 +4,7 @@
 
 import FreeCADGui
 
-from PySide import QtGui
+from PySide import QtCore,QtGui
 
 from mod.translation_tools import __
 from mod.dialog_tools import error_dialog, warning_dialog, ok_cancel_dialog
@@ -23,6 +23,7 @@ from mod.widgets.damping_config_dialog import DampingConfigDialog
 from mod.widgets.inlet_config_dialog import InletConfigDialog
 from mod.widgets.chrono.chrono_config_dialog import ChronoConfigDialog
 from mod.widgets.moorings.moorings_configuration_dialog import MooringsConfigurationDialog
+from mod.widgets.nn_parameters_dialog import NNParametersDialog
 
 from mod.dataobjects.case import Case
 from mod.dataobjects.application_settings import ApplicationSettings
@@ -33,7 +34,7 @@ from mod.dataobjects.relaxation_zone_regular import RelaxationZoneRegular
 from mod.dataobjects.relaxation_zone_irregular import RelaxationZoneIrregular
 from mod.dataobjects.relaxation_zone_file import RelaxationZoneFile
 from mod.dataobjects.relaxation_zone_uniform import RelaxationZoneUniform
-
+from mod.dataobjects.nn_parameters_wizard import NNParametersWizard
 
 class SpecialOptionsSelectorDialog(QtGui.QDialog):
     """ A dialog with different buttons to access special DesignSPHysics options for a case. """
@@ -44,7 +45,8 @@ class SpecialOptionsSelectorDialog(QtGui.QDialog):
         self.setWindowTitle(__("Special"))
         self.setMinimumWidth(200)
         self.sp_window_layout = QtGui.QVBoxLayout()
-
+         
+        self.sp_nnparameters_button = QtGui.QPushButton(__("Non newtonian parameters"))
         self.sp_damping_button = QtGui.QPushButton(__("New Damping Zone"))
         self.sp_inlet_button = QtGui.QPushButton(__("Inlet/Outlet"))
         self.sp_chrono_button = QtGui.QPushButton(__("Coupling CHRONO"))
@@ -73,8 +75,9 @@ class SpecialOptionsSelectorDialog(QtGui.QDialog):
         self.sp_relaxationzone_menu.triggered.connect(self.on_relaxationzone_menu)
         self.sp_accinput_button.clicked.connect(self.on_accinput_button)
         self.sp_moorings_button.clicked.connect(self.on_moorings_button)
-
-        # Add buttons to the special window
+        self.sp_nnparameters_button.clicked.connect(self.on_nnparameters_button)        
+        
+        self.sp_window_layout.addWidget(self.sp_nnparameters_button)
         self.sp_window_layout.addWidget(self.sp_damping_button)
         self.sp_window_layout.addWidget(self.sp_inlet_button)
         self.sp_window_layout.addWidget(self.sp_chrono_button)
@@ -92,7 +95,14 @@ class SpecialOptionsSelectorDialog(QtGui.QDialog):
             self.sp_moorings_button.hide()
 
         self.exec_()
-
+    
+    def on_nnparameters_button(self):
+        """ Defines nnparameters button behaviour"""
+        if Case.the().executable_paths.dsphysics.find('NNewtonian') == -1:
+            warning_dialog(__("DualSPHysics executable is not set as non newtonian!"))
+        NNParametersDialog(parent=get_fc_main_window())  
+        self.accept()
+            
     def on_damping_option(self):
         """ Defines damping button behaviour"""
         damping_group_name = setup_damping_environment()
