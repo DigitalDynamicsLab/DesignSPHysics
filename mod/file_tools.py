@@ -46,7 +46,6 @@ from mod.dataobjects.relaxation_zone_file import RelaxationZoneFile
 from mod.dataobjects.simulation_object import SimulationObject
 from mod.dataobjects.properties.material_property import MaterialProperty
 
-
 def get_total_exported_parts_from_disk(out_folder_path) -> int:
     """ Gets the integer for the part with largest number on the out folder. """
     files_glob = glob("{}/Part_*.bi4".format(out_folder_path))
@@ -90,15 +89,25 @@ def load_case(load_path: str) -> "Case":
 def save_case(save_name: str, case: "Case") -> None:
     """ Saves a case to disk in the given path. """
     project_name = save_name.split("/")[-1]
+    case.o_path = case.path
     case.path = save_name
     case.name = project_name
-
+    
     if not path.exists(save_name):
         makedirs(save_name)
 
     if not path.exists("{}/{}_out".format(save_name, project_name)):
         makedirs("{}/{}_out".format(save_name, project_name))
-
+    
+    if case.executable_paths.dsphysics.find('NNewtonian') != -1:
+        case_name = case.o_path.split('/')[-1]
+        nn_options_xml_path = case.o_path+'/'+case_name+'_out/nn_options.xml'
+        new_nn_options_xml_path = case.path + '/' + case.name +'_out/nn_options.xml'
+        try:
+            shutil.copyfile(nn_options_xml_path,new_nn_options_xml_path)
+        except:
+            pass 
+    
     # Export all complex objects to STL
     for obj in case.get_all_complex_objects():
         Mesh.export([get_fc_object(obj.name)], "{}/{}.stl".format(save_name, obj.name))
