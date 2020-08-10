@@ -29,10 +29,7 @@ def executable_contains_string(executable: str, string: str) -> bool:
         ensure_process_is_executable_or_fail(executable)
         process.start("\"{}\" -ver".format(executable))
         process.waitForFinished()
-        try:
-            output = str(process.readAllStandardOutput().data(), encoding='utf-8')
-        except UnicodeDecodeError:
-            output = str(process.readAllStandardOutput().data(), encoding='latin1')
+        output = str(process.readAllStandardOutput().data(), encoding='utf-8')
 
         return string.lower() in output.lower()
 
@@ -53,10 +50,7 @@ def get_executable_info_flag(executable: str) -> dict:
         ensure_process_is_executable_or_fail(executable)
         process.start(executable_cli)
         process.waitForFinished()
-        try:
-            output = str(process.readAllStandardOutput().data(), encoding='utf-8')
-        except UnicodeDecodeError:
-            output = str(process.readAllStandardOutput().data(), encoding='latin1')
+        output = str(process.readAllStandardOutput().data(), encoding='utf-8')
 
         return json.loads(output)
 

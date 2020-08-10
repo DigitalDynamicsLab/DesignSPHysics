@@ -117,10 +117,7 @@ class DockSimulationWidget(QtGui.QWidget):
             """ Simulation finish handler. Defines what happens when the process finishes."""
 
             # Reads output and completes the progress bar
-            try:
-                output = str(process.readAllStandardOutput().data(), encoding='utf-8')
-            except UnicodeDecodeError:
-                output = str(process.readAllStandardOutput().data(), encoding='latin1')
+            output = str(process.readAllStandardOutput().data(), encoding='utf-8')
 
             run_dialog.set_detail_text(str(output))
             run_dialog.run_complete()
