@@ -26,44 +26,48 @@ class NNParametersDialog(QDialog):
         
         if self.nn_parameters_wizard.gencase_output_xml_exists == True:
         
-            self.fluid_phases_num = int(self.nn_parameters_wizard.gencase_mkfluid)
+            if self.nn_parameters_wizard.gencase_mkfluid_exists == True:
         
-            self.rheology_options_tab = RheologyOptionsTab()
-            self.set_rheology_options_tab()
+                self.fluid_phases_num = int(self.nn_parameters_wizard.gencase_mkfluid)
             
-            self.nn_parameters_tabwidget = QTabWidget()
-            self.nn_parameters_tabwidget.addTab(self.rheology_options_tab,"Execution")
-            
-            self.phases_parameters_tab_list = []
-            for current_phase in range(self.fluid_phases_num):
-                self.phases_parameters_tab_list.append(PhaseParametersTab())
-                self.set_phase_parameters_tab_entries(current_phase)
-                self.nn_parameters_tabwidget.addTab(self.phases_parameters_tab_list[current_phase],"Phase "+str(current_phase+1))
-            
-            ok_button = QPushButton('OK')
-            ok_button.clicked.connect(self.launch_nn_parameters_wizard)
-            ok_button.setToolTip('Apply change to XML (no need to run GenCase)')
-            reset_button = QPushButton('Reset')
-            reset_button.clicked.connect(self.set_default_parameters)
-            reset_button.setToolTip('Reset default settings')
-            cancel_button = QPushButton('Cancel')
-            cancel_button.clicked.connect(self.close)
-            cancel_button.setToolTip('Discard any unapplied change')
-            
-            self.layout = QGridLayout(self)
-            self.layout.addWidget(self.nn_parameters_tabwidget,0,0,1,3)
-            self.layout.addWidget(ok_button,1,0,1,1)
-            self.layout.addWidget(reset_button,1,1,1,1)
-            self.layout.addWidget(cancel_button,1,2,1,1)
-            self.setLayout(self.layout)
-            
-            self.setMinimumWidth(400)
-            self.center() 
-            
-            if not self.nn_parameters_wizard.nn_options_xml_exists:
-                warning_dialog('File nn_options.xml not found. Default settings applied')
+                self.rheology_options_tab = RheologyOptionsTab()
+                self.set_rheology_options_tab()
                 
-            self.exec_()
+                self.nn_parameters_tabwidget = QTabWidget()
+                self.nn_parameters_tabwidget.addTab(self.rheology_options_tab,"Execution")
+                
+                self.phases_parameters_tab_list = []
+                for current_phase in range(self.fluid_phases_num):
+                    self.phases_parameters_tab_list.append(PhaseParametersTab())
+                    self.set_phase_parameters_tab_entries(current_phase)
+                    self.nn_parameters_tabwidget.addTab(self.phases_parameters_tab_list[current_phase],"Phase "+str(current_phase+1))
+                
+                ok_button = QPushButton('OK')
+                ok_button.clicked.connect(self.launch_nn_parameters_wizard)
+                ok_button.setToolTip('Apply change to XML (no need to run GenCase)')
+                reset_button = QPushButton('Reset')
+                reset_button.clicked.connect(self.set_default_parameters)
+                reset_button.setToolTip('Reset default settings')
+                cancel_button = QPushButton('Cancel')
+                cancel_button.clicked.connect(self.close)
+                cancel_button.setToolTip('Discard any unapplied change')
+                
+                self.layout = QGridLayout(self)
+                self.layout.addWidget(self.nn_parameters_tabwidget,0,0,1,3)
+                self.layout.addWidget(ok_button,1,0,1,1)
+                self.layout.addWidget(reset_button,1,1,1,1)
+                self.layout.addWidget(cancel_button,1,2,1,1)
+                self.setLayout(self.layout)
+                
+                self.setMinimumWidth(400)
+                self.center() 
+                
+                if not self.nn_parameters_wizard.nn_options_xml_exists:
+                    warning_dialog('File nn_options.xml not found. Default settings applied')
+                    
+                self.exec_()
+            else:
+                warning_dialog('First add fluid particles and run GenCase')
         else:
             warning_dialog('Need to run GenCase before setting non netonian parameters')
        
