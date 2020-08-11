@@ -3,6 +3,8 @@
 """DesignSPHysics Post-Processing tools utilities. """
 
 import subprocess
+import os
+import shutil
 
 from PySide import QtCore
 
@@ -28,10 +30,13 @@ def partvtk_export(options, case, post_processing_widget) -> None:
     export_dialog.show()
 
     case.info.current_output = ""
-
+    
+    if os.path.isdir("{out_path}{file_name}".format(out_path=case.get_out_folder_path(), file_name=options["file_name"])):
+        shutil.rmtree("{out_path}{file_name}".format(out_path=case.get_out_folder_path(), file_name=options["file_name"]))
+        
     # Build parameters
     executable_parameters = ["-dirin {}".format(case.get_out_folder_path()),
-                             "{save_flag} {out_path}/{file_name}/{file_name}".format(save_flag=save_flag, out_path=case.get_out_folder_path(), file_name=options["file_name"]),
+                             "{save_flag} {out_path}{file_name}/{file_name}".format(save_flag=save_flag, out_path=case.get_out_folder_path(), file_name=options["file_name"]),
                              "-onlytype:{save_types} {additional}".format(save_types=options["save_types"], additional=options["additional_parameters"])]
 
     # Information ready handler.
@@ -66,7 +71,7 @@ def partvtk_export(options, case, post_processing_widget) -> None:
             error_dialog(__("There was an error on the post-processing. Show details to view the errors."), detailed_text=detailed_text)
 
         if options["open_paraview"]:
-            subprocess.Popen([case.executable_paths.paraview, "--data={}\\{}_..{}".format(case.get_out_folder_path(), options["file_name"], save_extension)], stdout=subprocess.PIPE)
+            subprocess.Popen([case.executable_paths.paraview, "--data={}\\{}\\{}_..{}".format(case.get_out_folder_path(), options["file_name"], options["file_name"], save_extension)], stdout=subprocess.PIPE)
 
     export_dialog.on_cancel.connect(on_cancel)
     export_process = QtCore.QProcess(get_fc_main_window())
@@ -253,6 +258,9 @@ def isosurface_export(options, case, post_processing_widget) -> None:
 
     case.info.current_output = ""
 
+    if os.path.isdir("{out_path}{file_name}".format(out_path=case.get_out_folder_path(), file_name=options["file_name"])):
+        shutil.rmtree("{out_path}{file_name}".format(out_path=case.get_out_folder_path(), file_name=options["file_name"]))
+        
     # Build parameters
     executable_parameters = ["-dirin {out_path}".format(out_path=case.get_out_folder_path()),
                              "{surface_or_slice} {out_path}/{file_name}/{file_name}".format(surface_or_slice=options["surface_or_slice"], out_path=case.get_out_folder_path(), file_name=options["file_name"]),
@@ -287,7 +295,7 @@ def isosurface_export(options, case, post_processing_widget) -> None:
             error_dialog(__("There was an error on the post-processing. Show details to view the errors."), detailed_text=detailed_text)
 
         if options["open_paraview"]:
-            subprocess.Popen([case.executable_paths.paraview, "--data={}\\{}_..{}".format(case.path + "\\" + case.name + "_out", options["file_name"], "vtk")], stdout=subprocess.PIPE)
+            subprocess.Popen([case.executable_paths.paraview, "--data={}\\{}\\{}_..{}".format(case.path + "\\" + case.name + "_out", options["file_name"], options["file_name"], "vtk")], stdout=subprocess.PIPE)
 
     export_dialog.on_cancel.connect(on_cancel)
     export_process = QtCore.QProcess(get_fc_main_window())
