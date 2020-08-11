@@ -38,10 +38,14 @@ class NNParametersWizard():
                 self.gencase_xml_tree = etree.parse(from_file)
             else:
                 self.gencase_xml_tree = etree.parse(self.gencase_output_xml_path)
-                
+             
             self.gencase_xml_root = self.gencase_xml_tree.getroot()
             if self.gencase_xml_root is not None:
-                self.gencase_mkfluid = self.gencase_xml_root.findall(".//execution/particles/_summary/fluid")[0].attrib['mkcount']
+                self.gencase_mkfluid_exists = True
+                try:
+                    self.gencase_mkfluid = self.gencase_xml_root.findall(".//execution/particles/_summary/fluid")[0].attrib['mkcount']
+                except:
+                    self.gencase_mkfluid_exists = False
                 self.gencase_xml_nn_parameters_exist = False
                 if len(self.gencase_xml_root.findall(".//execution/special")[0].getchildren()) > 0:
                     self.gencase_xml_nn_parameters_exist = True 
@@ -140,7 +144,10 @@ class NNParametersWizard():
     def init_nn_parameters_xml_tree(self,phaseNum):
         if self.nn_options_xml_exists == True:
             os.remove(self.nn_options_xml_path)
-        etree.ElementTree(etree.Element('nnparameters')).write(self.nn_options_xml_name)
+        # else:
+            # with open(self.nn_options_xml_path, 'w'): 
+                # pass
+        etree.ElementTree(etree.Element('nnparameters')).write(self.nn_options_xml_path)
         self.nn_options_xml_tree = etree.parse(self.nn_options_xml_path)   
         self.nn_options_xml_root = self.nn_options_xml_tree.getroot()
         phases= self.gencase_xml_root.findall('.//execution/special/nnphases/phase')
