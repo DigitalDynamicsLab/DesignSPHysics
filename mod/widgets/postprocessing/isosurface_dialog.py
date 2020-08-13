@@ -41,6 +41,7 @@ class IsoSurfaceDialog(QtGui.QDialog):
 
         self.isosfc_parameters_label = QtGui.QLabel(__("Additional Parameters"))
         self.isosfc_parameters_text = QtGui.QLineEdit()
+        self.isosfc_parameters_text.setText("-vars:+idp")
         self.isosfc_parameters_layout.addWidget(self.isosfc_parameters_label)
         self.isosfc_parameters_layout.addWidget(self.isosfc_parameters_text)
 
