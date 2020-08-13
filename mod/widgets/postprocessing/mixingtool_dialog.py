@@ -38,7 +38,7 @@ class MixingToolDialog(QDialog):
       
         self.variance_calculation_step_spinbox.setFixedWidth(75)
         variance_calculation_step_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-        self.variance_calculation_step_spinbox.setValue(10)    
+        self.variance_calculation_step_spinbox.setValue(1)    
         
         self.launch_mixing_tool_pushbutton.clicked.connect(self.launch_mixing_tool)
         self.launch_boundaryVTK_pushbutton.clicked.connect(self.launch_boundaryVTK_tool)
