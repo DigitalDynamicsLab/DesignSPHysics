@@ -18,11 +18,12 @@ from mod.dataobjects.case import Case
 
 from mod.widgets.run_dialog import RunDialog
 from mod.widgets.run_additional_parameters_dialog import RunAdditionalParametersDialog
-
+from mod.widgets.iterate_dialog import IterateDialog
 
 class DockSimulationWidget(QtGui.QWidget):
     """DesignSPHysics Dock Execution Widget """
 
+    need_refresh = QtCore.Signal()
     simulation_complete = QtCore.Signal(bool)
     simulation_started = QtCore.Signal()
     simulation_cancelled = QtCore.Signal()
@@ -55,17 +56,26 @@ class DockSimulationWidget(QtGui.QWidget):
         self.additional_parameters_button = QtGui.QPushButton(__("Additional parameters"))
         self.additional_parameters_button.setToolTip("__(Sets simulation additional parameters for execution.)")
         self.additional_parameters_button.clicked.connect(self.on_additional_parameters)
+        
+        # Additional parameters button
+        self.iterate_button = QtGui.QPushButton(__("Iterate"))
+        self.iterate_button.setToolTip("__(Iterate simulations varying predefined parameters)")
+        self.iterate_button.clicked.connect(self.on_ex_iterate_dialog)
 
         self.button_layout = QtGui.QHBoxLayout()
         self.button_layout.addWidget(self.execute_button)
         self.button_layout.addWidget(self.device_selector)
-        self.button_layout.addWidget(self.additional_parameters_button)
+        #self.button_layout.addWidget(self.additional_parameters_button)
+        self.button_layout.addWidget(self.iterate_button)
 
         self.main_layout.addWidget(self.title_label)
         self.main_layout.addLayout(self.button_layout)
 
         self.setLayout(self.main_layout)
-
+    
+    def on_ex_iterate_dialog(self):
+        self.iterate_dialog = IterateDialog(parent=self,device_selector = self.device_selector)
+    
     def on_ex_simulate(self):
         """ Defines what happens on simulation button press.
             It shows the run window and starts a background process with dualsphysics running. Updates the window with useful info."""
