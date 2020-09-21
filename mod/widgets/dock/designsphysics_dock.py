@@ -9,6 +9,7 @@ from mod.freecad_tools import get_fc_main_window
 
 from mod.constants import MAIN_WIDGET_INTERNAL_NAME, APP_NAME, VERSION
 
+from mod.file_tools import save_case
 from mod.dataobjects.case import Case
 
 from mod.widgets.dock.dock_logo_widget import DockLogoWidget
@@ -42,7 +43,7 @@ class DesignSPHysicsDock(QtGui.QDockWidget):
         self.simulation_widget = DockSimulationWidget(parent=get_fc_main_window())
         self.post_processing_widget = DockPostProcessingWidget(parent=get_fc_main_window())
         self.object_list_widget = DockObjectListTableWidget(parent=get_fc_main_window())
-
+        
         self.main_layout.addWidget(self.dock_logo_widget)
         self.main_layout.addWidget(h_line_generator())
         self.main_layout.addWidget(self.dock_configuration_widget)
@@ -69,10 +70,11 @@ class DesignSPHysicsDock(QtGui.QDockWidget):
         self.pre_proccessing_widget.case_created.connect(self.adapt_to_new_case)
         self.pre_proccessing_widget.gencase_completed.connect(self.adapt_to_gencase_done)
         self.pre_proccessing_widget.simulation_completed.connect(self.adapt_to_simulation_done)
+        self.simulation_widget.need_refresh.connect(self.on_refresh)
         self.simulation_widget.simulation_complete.connect(self.adapt_to_simulation_done)
         self.simulation_widget.simulation_started.connect(self.adapt_to_simulation_start)
-        self.simulation_widget.simulation_cancelled.connect(self.adapt_to_simulation_cancel)
-
+        self.simulation_widget.simulation_cancelled.connect(self.adapt_to_simulation_cancel)       
+    
     def on_refresh(self):
         """ Reacts to a refresh signal emmited by the pre processing widget. """
         self.need_refresh.emit()
