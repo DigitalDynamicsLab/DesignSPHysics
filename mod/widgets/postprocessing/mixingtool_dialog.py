@@ -10,6 +10,7 @@ from PySide.QtGui import QGridLayout, QDesktopWidget, QPushButton, QSpinBox
 from PySide.QtCore import Qt, QProcess
 
 from mod.dataobjects.case import Case
+from mod.dataobjects.executable_paths import ExecutablePaths
 
 class MixingToolDialog(QDialog):
     
@@ -117,18 +118,22 @@ class MixingToolDialog(QDialog):
         self.launch_mixing_tool_pushbutton.setDisabled(True)
         self.launch_boundaryVTK_pushbutton.setDisabled(True)
         
+        BoundaryVTK_full_path = abspath(Case.the().executable_paths.boundaryvtk)
+        self.process_output_textbox.append(BoundaryVTK_full_path)
+        
         cwd = getcwd()
         case_name = Case.the().path.split('/')[-1]
         chdir(Case.the().path+'/'+case_name+'_out')
         
         if isdir(Case.the().path+'/'+case_name+'_out\BoundaryMoving'):
             shutil.rmtree(Case.the().path+'/'+case_name+'_out\BoundaryMoving')
-            
-        BoundaryVTK_process_full_path = dirname(abspath(__file__)).replace('mod\widgets\postprocessing',Case.the().executable_paths.boundaryvtk)
+             
+        
+        #BoundaryVTK_process_full_path = dirname(abspath(__file__)).replace('mod\widgets\postprocessing',Case.the().executable_paths.boundaryvtk)
         BoundaryVTK_process_argv = ['-loadvtk *_Actual.vtk','-filexml AUTO','-motiondata .','-savevtkdata BoundaryMoving\BoundaryMoving.vtk',
                                    '-onlytype:moving','-savevtkdata Boundary.vtk','-onlytype:fixed']
         BoundaryVTK_process = QProcess()
-        BoundaryVTK_process.start(BoundaryVTK_process_full_path,BoundaryVTK_process_argv)
+        BoundaryVTK_process.start(BoundaryVTK_full_path,BoundaryVTK_process_argv)
         BoundaryVTK_process.readyRead.connect(lambda: self.on_data_ready(BoundaryVTK_process))
         BoundaryVTK_process.finished.connect(lambda: self.launch_mixing_tool_pushbutton.setEnabled(True))
         BoundaryVTK_process.finished.connect(lambda: self.launch_boundaryVTK_pushbutton.setEnabled(True))
