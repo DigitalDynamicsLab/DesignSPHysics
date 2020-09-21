@@ -176,7 +176,7 @@ class NNParametersWizard():
                     params.append(phase.attrib['value'])
         return params
     
-    def update_nn_parameters(self):
+    def update_nn_parameters(self,target_params = None):
         if self.gencase_xml_nn_parameters_exist == False:
             self.gencase_xml_root.findall('.//execution/parameters')[0].append(
                 etree.Element('parameter',
@@ -230,12 +230,18 @@ class NNParametersWizard():
                 ['HBP_n',params[6]],
                 ['phasetype',params[7]]
                 ]
+            if target_params is not None:
+                for target in target_params:
+                    for param in phase_parameters:
+                        if target[0] in param:
+                            param[1] = target[1]           
+                    
             parent = self.gencase_xml_root.findall('.//execution/special/nnphases/phase')[curr_phase]
             parentSpecial = self.nn_options_xml_root.findall('.//special/nnphases/phase')[curr_phase]
             for param in phase_parameters:
                 parent.find(param[0]).attrib['value'] = param[1]
                 parentSpecial.find(param[0]).attrib['value'] = param[1]
-        
+                
         self.gencase_xml_root.findall(".//casedef/constantsdef/rhop0")[0].attrib['value'] = self.nn_options_xml_root.findall(".//special/nnphases/phase[@mkfluid='0']/rhop")[0].attrib['value']
         self.gencase_xml_root.findall(".//execution/constants/rhop0")[0].attrib['value'] = self.nn_options_xml_root.findall(".//special/nnphases/phase[@mkfluid='0']/rhop")[0].attrib['value'] 
         self.prettify_output_xml(self.gencase_xml_tree,self.gencase_output_xml_path)
