@@ -4,7 +4,7 @@
         "dsphysics" : "./dualsphysics/bin/DualSPHysics5.0_NNewtonian_win64.exe",
         "partvtk" : "./dualsphysics/bin/PartVTK_win64.exe",
         "floatinginfo" : "./dualsphysics/bin/FloatingInfo_win64.exe",
-        "computeforces" : "./dualsphysics/bin/ComputeForces_win64.exe",
+        "computeforces" : "./dualsphysics/bin/ComputeForces4_win64.exe",
         "measuretool" : "./dualsphysics/bin/MeasureTool_win64.exe",
         "isosurface" : "./dualsphysics/bin/IsoSurface_win64.exe",
         "boundaryvtk" : "./dualsphysics/bin/BoundaryVTK_win64.exe",
