@@ -37,6 +37,7 @@ class IterateDialog(QtGui.QDialog):
     simulation_cancelled = QtCore.Signal()
     simulation_started = QtCore.Signal()
     simulation_complete = QtCore.Signal()
+    start_iter = QtCore.Signal()
     
     def __init__(self, parent = None, device_selector = None):
         super().__init__(parent = parent)
@@ -51,7 +52,12 @@ class IterateDialog(QtGui.QDialog):
         
         self.simulation_is_cancelled = False
         self.simulation_cancelled.connect(self.on_cancel_simulate)
+        self.start_iter.connect(self.on_ex_iterate)
+        self.simulation_complete.connect(self.on_ex_iterate)
                 
+        self.iter_num = 0
+        self.save_name_list = []
+        
         self.setModal(False)
         self.title = 'Iterate options'
         self.left = 0
@@ -85,7 +91,7 @@ class IterateDialog(QtGui.QDialog):
         self.iteration_params_layout = QtGui.QVBoxLayout()
         
         self.iterate_button = QtGui.QPushButton("Iterate")
-        self.iterate_button.clicked.connect(self.on_ex_iterate)
+        self.iterate_button.clicked.connect(self.on_prepare_iterate)
         
         self.buttons_layout = QtGui.QHBoxLayout()
         self.buttons_layout.addWidget(self.iterate_button)
@@ -99,7 +105,7 @@ class IterateDialog(QtGui.QDialog):
     def on_cancel_simulate(self):
         self.simulation_is_cancelled = True
         
-    def on_ex_iterate(self):
+    def on_prepare_iterate(self):
         self.close()     
         param_values = []
         for i in range(0,len(self.iteration_params_labels)):
@@ -109,9 +115,7 @@ class IterateDialog(QtGui.QDialog):
                 self.iteration_params_labels.remove(self.iteration_params_labels[i])
                 
         case_original_path = Case.the().path 
-        
-        iters = 0
-        iters_completed = 0
+                
         combinations = itertools.product(*param_values)
         for params_combination in combinations:
             if self.simulation_is_cancelled != True:
@@ -128,24 +132,26 @@ class IterateDialog(QtGui.QDialog):
                     elif self.iteration_params_labels[i] in self.nn_constants:
                         if self.iteration_params_labels[i] == 'viscop':
                             nn_target_params.append(['visco',params_combination[i]])
-                            exec('Case.the().constants.visco = float('+params_combination[i]+')')
+                            exec('Case.the().execution_parameters.visco = float('+params_combination[i]+')')
                         elif self.iteration_params_labels[i] == 'rhop':
                             nn_target_params.append(['rhop',params_combination[i]])
                             exec('Case.the().constants.rhop0 = float('+params_combination[i]+')')
                         else:
                             nn_target_params.append([self.iteration_params_labels[i],params_combination[i]])                          
                     save_name = save_name + '_' + self.iteration_params_labels[i] + params_combination[i]
-                self.on_save_case(save_name = case_original_path + save_name) 
-                self.on_execute_gencase(nn_target_params)
-                self.device_selector.setCurrentIndex(1)
-                self.on_ex_simulate()
-                iters_completed += 1
-            iters += 1
-                
-        warning_dialog("Iterations completed: "+str(iters_completed)+"/"+str(iters)+".")
+            self.save_name_list.append(case_original_path + save_name)
+            self.on_save_case(save_name = case_original_path + save_name) 
+            self.on_execute_gencase(nn_target_params)
             
-        self.on_load_case(case_original_path+"/casedata.dsphdata")
-            
+        self.start_iter.emit()
+              
+    def on_ex_iterate(self):
+        if self.iter_num != len(self.save_name_list):
+            self.on_load_case(self.save_name_list[self.iter_num]+'/casedata.dsphdata')
+            self.device_selector.setCurrentIndex(1) 
+            self.on_ex_simulate()
+            self.iter_num += 1
+    
     def on_search_result(self):   
         i = len(self.iteration_params_labels)    
         if not self.search_results.currentItem().text() in self.iteration_params_labels:
@@ -266,9 +272,8 @@ class IterateDialog(QtGui.QDialog):
                 total_particles_text = output[output.index("Total particles: "):output.index(" (bound=")]
                 total_particles = int(total_particles_text[total_particles_text.index(": ") + 2:])
                 Case.the().info.particle_number = total_particles
-                if Case.the().executable_paths.dsphysics.find('NNewtonian') != -1:
-                   if NNParametersWizard().nn_options_xml_exists:
-                      NNParametersWizard().update_nn_parameters(nn_target_params)
+                if NNParametersWizard().nn_options_xml_exists:
+                    NNParametersWizard().update_nn_parameters(nn_target_params)
                 #GencaseCompletedDialog(particle_count=total_particles, detail_text=output, cmd_string=cmd_string, parent=get_fc_main_window()).show()
                 Case.the().info.is_gencase_done = True
                 self.on_save_case()
@@ -287,9 +292,9 @@ class IterateDialog(QtGui.QDialog):
 
         refocus_cwd()
 
-        if Case.the().info.needs_to_run_gencase:
+        #if Case.the().info.needs_to_run_gencase:
             # Warning window about save_case
-            warning_dialog("You should run GenCase again. Otherwise, the obtained results may not be as expected")
+            #warning_dialog("You should run GenCase again. Otherwise, the obtained results may not be as expected")
 
         static_params_exe = [Case.the().get_out_xml_file_path(),
                              Case.the().get_out_folder_path(),
