@@ -150,7 +150,7 @@ def computeforces_export(options, case, post_processing_widget) -> None:
 
     executable_parameters = ["-dirin {}".format(case.get_out_folder_path()),
                              "-filexml {out_path}{case_name}.xml".format(out_path=case.get_out_folder_path(), case_name=case.name),
-                             "{save_flag} {out_path}{file_name}".format(save_flag=save_flag, out_path=case.get_out_folder_path(), file_name=options["filename"]),
+                             "{save_flag} {out_path}{file_name}/{file_name}".format(save_flag=save_flag, out_path=case.get_out_folder_path(), file_name=options["filename"]),
                              options["additional_parameters"]]
 
     if options["onlyprocess"]:
