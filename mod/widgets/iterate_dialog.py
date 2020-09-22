@@ -2,6 +2,9 @@
 # -*- coding: utf-8 -*-
 """DesignSPHysics Non Newtonian Parameters Dialog """
 
+import FreeCAD
+
+import pickle
 import itertools
 import os
 from os import path
@@ -10,21 +13,20 @@ from traceback import print_exc
 from PySide import QtCore, QtGui
 
 from mod.translation_tools import __
-from mod.gui_tools import get_icon
 from mod.stdout_tools import log
-from mod.stdout_tools import error, debug
+from mod.stdout_tools import debug
 from mod.dialog_tools import error_dialog, warning_dialog
 from mod.executable_tools import refocus_cwd, ensure_process_is_executable_or_fail
-from mod.file_tools import save_case, load_case
-from mod.freecad_tools import get_fc_main_window, save_current_freecad_document
+from mod.file_tools import save_case
+from mod.freecad_tools import get_fc_main_window, save_current_freecad_document, document_count
+
+from mod.constants import VERSION
 
 from mod.dataobjects.case import Case
-from mod.dataobjects.simulation_object import SimulationObject
 from mod.dataobjects.nn_parameters_wizard import NNParametersWizard
 
 from mod.widgets.gencase_completed_dialog import GencaseCompletedDialog
 from mod.widgets.run_dialog import RunDialog
-from mod.widgets.run_additional_parameters_dialog import RunAdditionalParametersDialog
 
 class IterateDialog(QtGui.QDialog):
     
@@ -36,8 +38,8 @@ class IterateDialog(QtGui.QDialog):
     force_pressed = QtCore.Signal()
     simulation_cancelled = QtCore.Signal()
     simulation_started = QtCore.Signal()
-    simulation_complete = QtCore.Signal()
     start_iter = QtCore.Signal()
+    iter_completed = QtCore.Signal()
     
     def __init__(self, parent = None, device_selector = None):
         super().__init__(parent = parent)
@@ -52,8 +54,7 @@ class IterateDialog(QtGui.QDialog):
         
         self.simulation_is_cancelled = False
         self.simulation_cancelled.connect(self.on_cancel_simulate)
-        self.start_iter.connect(self.on_ex_iterate)
-        self.simulation_complete.connect(self.on_ex_iterate)
+        self.iter_completed.connect(self.on_ex_iterate)
                 
         self.iter_num = 0
         self.save_name_list = []
@@ -113,41 +114,71 @@ class IterateDialog(QtGui.QDialog):
                 param_values.append(self.iteration_params_lines[i].text().split(','))
             else:
                 self.iteration_params_labels.remove(self.iteration_params_labels[i])
-                
-        case_original_path = Case.the().path 
-                
+                                
+        self.combinations_list = []
         combinations = itertools.product(*param_values)
+        self.total_iters = 0
         for params_combination in combinations:
-            if self.simulation_is_cancelled != True:
-                save_name = ''
-                nn_target_params = []
-                for i in range(0,len(self.iteration_params_labels)):          
-                    if self.iteration_params_labels[i] in self.constants:
-                        if self.iteration_params_labels[i] == 'rhopg':
-                            exec('Case.the().constants.rhop0 = float('+params_combination[i]+')')
-                        else:
-                            exec('Case.the().constants.'+self.iteration_params_labels[i]+'= float('+params_combination[i]+')')
-                    elif self.iteration_params_labels[i] in self.parameters:
-                        exec('Case.the().execution_parameters.'+self.iteration_params_labels[i]+'= float('+params_combination[i]+')')
-                    elif self.iteration_params_labels[i] in self.nn_constants:
-                        if self.iteration_params_labels[i] == 'viscop':
-                            nn_target_params.append(['visco',params_combination[i]])
-                            exec('Case.the().execution_parameters.visco = float('+params_combination[i]+')')
-                        elif self.iteration_params_labels[i] == 'rhop':
-                            nn_target_params.append(['rhop',params_combination[i]])
-                            exec('Case.the().constants.rhop0 = float('+params_combination[i]+')')
-                        else:
-                            nn_target_params.append([self.iteration_params_labels[i],params_combination[i]])                          
-                    save_name = save_name + '_' + self.iteration_params_labels[i] + params_combination[i]
-            self.save_name_list.append(case_original_path + save_name)
-            self.on_save_case(save_name = case_original_path + save_name) 
-            self.on_execute_gencase(nn_target_params)
+            self.total_iters += 1
+            self.combinations_list.append(params_combination)
+        
+        self.case_original_path = Case.the().path   
+        # for params_combination in combinations:
+            # if self.simulation_is_cancelled != True:
+                # save_name = ''
+                # nn_target_params = []
+                # for i in range(0,len(self.iteration_params_labels)):          
+                    # if self.iteration_params_labels[i] in self.constants:
+                        # if self.iteration_params_labels[i] == 'rhopg':
+                            # exec('Case.the().constants.rhop0 = float('+params_combination[i]+')')
+                        # else:
+                            # exec('Case.the().constants.'+self.iteration_params_labels[i]+'= float('+params_combination[i]+')')
+                    # elif self.iteration_params_labels[i] in self.parameters:
+                        # exec('Case.the().execution_parameters.'+self.iteration_params_labels[i]+'= float('+params_combination[i]+')')
+                    # elif self.iteration_params_labels[i] in self.nn_constants:
+                        # if self.iteration_params_labels[i] == 'viscop':
+                            # nn_target_params.append(['visco',params_combination[i]])
+                            # exec('Case.the().execution_parameters.visco = float('+params_combination[i]+')')
+                        # elif self.iteration_params_labels[i] == 'rhop':
+                            # nn_target_params.append(['rhop',params_combination[i]])
+                            # exec('Case.the().constants.rhop0 = float('+params_combination[i]+')')
+                        # else:
+                            # nn_target_params.append([self.iteration_params_labels[i],params_combination[i]])                          
+                    # save_name = save_name + '_' + self.iteration_params_labels[i] + params_combination[i]
+            # self.save_name_list.append(case_original_path + save_name)
+            # self.on_save_case(save_name = case_original_path + save_name) 
+            # self.on_execute_gencase(nn_target_params)
             
-        self.start_iter.emit()
+        # self.iter_completed.emit()
+        self.on_ex_iterate()
               
     def on_ex_iterate(self):
-        if self.iter_num != len(self.save_name_list):
-            self.on_load_case(self.save_name_list[self.iter_num]+'/casedata.dsphdata')
+        if self.iter_num != self.total_iters and self.simulation_is_cancelled != True:
+            params_combination = self.combinations_list[self.iter_num]
+            save_name = ''
+            nn_target_params = []
+            for i in range(0,len(self.iteration_params_labels)):          
+                if self.iteration_params_labels[i] in self.constants:
+                    if self.iteration_params_labels[i] == 'rhopg':
+                        exec('Case.the().constants.rhop0 = float('+params_combination[i]+')')
+                    else:
+                        exec('Case.the().constants.'+self.iteration_params_labels[i]+'= float('+params_combination[i]+')')
+                elif self.iteration_params_labels[i] in self.parameters:
+                    exec('Case.the().execution_parameters.'+self.iteration_params_labels[i]+'= float('+params_combination[i]+')')
+                elif self.iteration_params_labels[i] in self.nn_constants:
+                    if self.iteration_params_labels[i] == 'viscop':
+                        nn_target_params.append(['visco',params_combination[i]])
+                        exec('Case.the().execution_parameters.visco = float('+params_combination[i]+')')
+                    elif self.iteration_params_labels[i] == 'rhop':
+                        nn_target_params.append(['rhop',params_combination[i]])
+                        exec('Case.the().constants.rhop0 = float('+params_combination[i]+')')
+                    else:
+                        nn_target_params.append([self.iteration_params_labels[i],params_combination[i]])                          
+                save_name = save_name + '_' + self.iteration_params_labels[i] + params_combination[i]
+            #self.save_name_list.append(case_original_path + save_name)
+            self.on_save_case(save_name = self.case_original_path + save_name) 
+            self.on_execute_gencase(nn_target_params)
+            #self.on_load_case(self.save_name_list[self.iter_num]+'/casedata.dsphdata')
             self.device_selector.setCurrentIndex(1) 
             self.on_ex_simulate()
             self.iter_num += 1
@@ -180,11 +211,41 @@ class IterateDialog(QtGui.QDialog):
         cp = QtGui.QDesktopWidget().availableGeometry().center()
         qr.moveCenter(cp)
         self.move(qr.topLeft())
-    
+               
     def on_load_case(self,load_path):
         """Defines loading case mechanism. Load points to a dsphdata custom file, that stores all the relevant info.
            If FCStd file is not found the project is considered corrupt."""
-
+        def load_case(load_path: str) -> "Case":
+            """ Loads a case from the given folder and returns its Case data. """
+            refocus_cwd()
+            project_folder_path = path.dirname(load_path)
+            freecad_document_file_path = path.abspath("{}/DSPH_Case.FCStd".format(project_folder_path))
+        
+            if not path.isfile(freecad_document_file_path):
+                error_dialog(__("DSPH_Case.FCStd file could not be found. Please check if the project was moved or the file was renamed."))
+                return None
+        
+            if document_count():
+                return None
+        
+            FreeCAD.open(project_folder_path + "/DSPH_Case.FCStd")
+        
+            with open(load_path, "rb") as load_picklefile:
+                try:
+                    loaded_data = pickle.load(load_picklefile)
+                    if not loaded_data.version:
+                        warning_dialog(__("The case data you're trying to load is older than version 0.6 and cannot be loaded."))
+                        return None
+                    if loaded_data.version < VERSION:
+                        warning_dialog(__("The case data you are loading is from a previous version ({}) of this software. They may be missing features or errors.").format(loaded_data.version))
+                    elif loaded_data.version > VERSION:
+                        warning_dialog(__("You're loading a case data from a future version ({}) of this software. You should upgrade DesignSPHysics as they may be errors using this file.").format(loaded_data.version))
+        
+                    return loaded_data
+                except AttributeError:
+                    error_dialog(__("There was an error opening the case. Case Data file seems to be corrupted."))
+                    return None
+        
         Case.the().info.update_last_used_directory(load_path)
 
         if load_path == "":
@@ -307,8 +368,9 @@ class IterateDialog(QtGui.QDialog):
 
         final_params_ex = static_params_exe + additional_parameters
         cmd_string = "{} {}".format(Case.the().executable_paths.dsphysics, " ".join(final_params_ex))
-
-        run_dialog = RunDialog(case_name=Case.the().name, processor=self.device_selector.currentText(), number_of_particles=Case.the().info.particle_number, cmd_string=cmd_string, parent=get_fc_main_window())
+        
+        iter_name = Case.the().name+' ('+str(self.iter_num + 1)+' of '+str(self.total_iters)+' iterations)'
+        run_dialog = RunDialog(case_name=iter_name, processor=self.device_selector.currentText(), number_of_particles=Case.the().info.particle_number, cmd_string=cmd_string, parent=get_fc_main_window())
         run_dialog.set_value(0)
         run_dialog.run_update(0, 0, None)
         Case.the().info.is_simulation_done = False
@@ -352,14 +414,15 @@ class IterateDialog(QtGui.QDialog):
                 # Simulation went correctly
                 Case.the().info.is_simulation_done = True
                 Case.the().info.needs_to_run_gencase = False
-                self.simulation_complete.emit(True)
+                self.simulation_completed.emit(True)
+                self.iter_completed.emit()
             else:
                 # In case of an error
                 Case.the().info.needs_to_run_gencase = True
                 if "exception" in str(output).lower():
                     log("There was an error on the execution. Opening an error dialog for that.")
                     run_dialog.hide()
-                    self.simulation_complete.emit(False)
+                    self.simulation_completed.emit(False)
                     error_dialog(__("An error occurred during execution. Make sure that parameters exist and are properly defined. "
                                     "You can also check your execution device (update the driver of your GPU). Read the details for more information."), str(output))
             save_case(Case.the().path, Case.the())
