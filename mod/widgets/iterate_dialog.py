@@ -110,7 +110,7 @@ class IterateDialog(QtGui.QDialog):
         self.close()     
         param_values = []
         for i in range(0,len(self.iteration_params_labels)):
-            if len(self.iteration_params_lines[i].text().split(',')) > 1:
+            if len(self.iteration_params_lines[i].text().split(',')) >= 1:
                 param_values.append(self.iteration_params_lines[i].text().split(','))
             else:
                 self.iteration_params_labels.remove(self.iteration_params_labels[i])
