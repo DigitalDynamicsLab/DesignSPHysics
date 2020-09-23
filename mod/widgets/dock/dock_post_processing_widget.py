@@ -14,6 +14,7 @@ from mod.widgets.postprocessing.measuretool_dialog import MeasureToolDialog
 from mod.widgets.postprocessing.isosurface_dialog import IsoSurfaceDialog
 from mod.widgets.postprocessing.flowtool_dialog import FlowToolDialog
 from mod.widgets.postprocessing.mixingtool_dialog import MixingToolDialog
+from mod.widgets.postprocessing.post_processing_iterator_dialog import PostProcessingIteratorDialog
 
 
 class DockPostProcessingWidget(QtGui.QWidget):
@@ -39,6 +40,7 @@ class DockPostProcessingWidget(QtGui.QWidget):
         self.measuretool_button = QtGui.QPushButton(__("MeasureTool"))
         self.flowtool_button = QtGui.QPushButton(__("FlowTool"))
         self.mixingtool_button = QtGui.QPushButton(__("MixingTool"))
+        self.iterator_button = QtGui.QPushButton(__("Iterator"))
 
         self.partvtk_button.setToolTip(__("Opens the PartVTK tool."))
         self.computeforces_button.setToolTip(__("Opens the ComputeForces tool."))
@@ -46,7 +48,8 @@ class DockPostProcessingWidget(QtGui.QWidget):
         self.measuretool_button.setToolTip(__("Opens the MeasureTool tool."))
         self.isosurface_button.setToolTip(__("Opens the IsoSurface tool."))
         self.flowtool_button.setToolTip(__("Opens the FlowTool tool."))
-        self.flowtool_button.setToolTip(__("Opens the MixingTool tool."))
+        self.mixingtool_button.setToolTip(__("Opens the MixingTool tool."))
+        self.iterator_button.setToolTip(__("Opens the Iterator tool."))
 
         self.partvtk_button.clicked.connect(lambda: PartVTKDialog(self, parent=get_fc_main_window()))
         self.computeforces_button.clicked.connect(lambda: ComputeForcesDialog(self, parent=get_fc_main_window()))
@@ -55,15 +58,17 @@ class DockPostProcessingWidget(QtGui.QWidget):
         self.isosurface_button.clicked.connect(lambda: IsoSurfaceDialog(self, parent=get_fc_main_window()))
         self.flowtool_button.clicked.connect(lambda: FlowToolDialog(self, parent=get_fc_main_window()))
         self.mixingtool_button.clicked.connect(lambda: MixingToolDialog(self, parent=get_fc_main_window()))
+        self.iterator_button.clicked.connect(lambda: PostProcessingIteratorDialog(self, parent=get_fc_main_window()))
 
         self.main_layout.addWidget(self.title_label)
         self.first_row_layout.addWidget(self.partvtk_button)
         self.first_row_layout.addWidget(self.computeforces_button)
         self.first_row_layout.addWidget(self.isosurface_button)
-        self.second_row_layout.addWidget(self.floatinginfo_button)
+        self.first_row_layout.addWidget(self.floatinginfo_button)
         self.second_row_layout.addWidget(self.measuretool_button)
         self.second_row_layout.addWidget(self.flowtool_button)
         self.second_row_layout.addWidget(self.mixingtool_button)
+        self.second_row_layout.addWidget(self.iterator_button)
 
         self.main_layout.addLayout(self.first_row_layout)
         self.main_layout.addLayout(self.second_row_layout)
