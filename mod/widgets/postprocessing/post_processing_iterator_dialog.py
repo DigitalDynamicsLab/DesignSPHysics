@@ -82,7 +82,8 @@ class PostProcessingIteratorDialog(QtGui.QDialog):
                 
         self.show()
     
-    def on_run_button(self):         
+    def on_run_button(self):              
+            
         case_counter = 0          
         for case_line in self.case_path_lines:   
             case_exit_codes = []
@@ -113,7 +114,7 @@ class PostProcessingIteratorDialog(QtGui.QDialog):
                 QtCore.QCoreApplication.processEvents()
                         
                 if self.partfluid_checkbox.isChecked():
-                    process_argv = ['-savevtk PartFluid/PartFluid.vtk', '-onlytype:-fluid', '-filexml dir/AUTO', '-vars:+idp']
+                    process_argv = ['-savevtk PartFluid/PartFluid.vtk', '-onlytype:-moving,-fixed', '-filexml dir/AUTO', '-vars:+idp']
                     process = QtCore.QProcess()
                     process.start(r'C:/Users/penzo/AppData/Roaming/FreeCAD/Mod/DesignSPHysics/dualsphysics/bin/PartVTK_win64.exe',process_argv)
                     process.waitForFinished()
@@ -123,7 +124,7 @@ class PostProcessingIteratorDialog(QtGui.QDialog):
                 QtCore.QCoreApplication.processEvents()
                         
                 if self.partfixed_checkbox.isChecked():
-                    process_argv = ['-savevtk PartFixed/PartFixed.vtk', '-onlytype:-fixed', '-filexml dir/AUTO']
+                    process_argv = ['-savevtk PartFixed/PartFixed.vtk', '-onlytype:-moving,-fluid', '-filexml dir/AUTO']
                     process = QtCore.QProcess()
                     process.start(r'C:/Users/penzo/AppData/Roaming/FreeCAD/Mod/DesignSPHysics/dualsphysics/bin/PartVTK_win64.exe',process_argv)
                     process.waitForFinished()
@@ -133,7 +134,7 @@ class PostProcessingIteratorDialog(QtGui.QDialog):
                 QtCore.QCoreApplication.processEvents()
                         
                 if self.partmoving_checkbox.isChecked():
-                    process_argv = ['-savevtk PartMoving/PartMoving.vtk', '-onlytype:-moving', '-filexml dir/AUTO']
+                    process_argv = ['-savevtk PartMoving/PartMoving.vtk', '-onlytype:-fixed,-fluid', '-filexml dir/AUTO']
                     process = QtCore.QProcess()
                     process.start(r'C:/Users/penzo/AppData/Roaming/FreeCAD/Mod/DesignSPHysics/dualsphysics/bin/PartVTK_win64.exe',process_argv)
                     process.waitForFinished()
@@ -146,14 +147,14 @@ class PostProcessingIteratorDialog(QtGui.QDialog):
                     process_argv = ['-onlymk: 11', '-savevtk Forces/Forces.vtk']
                     process = QtCore.QProcess()
                     process.start(r'C:/Users/penzo/AppData/Roaming/FreeCAD/Mod/DesignSPHysics/dualsphysics/bin/ComputeForces4_win64.exe',process_argv)
-                    process.waitForFinished()
+                    process.waitForFinished(-1)
                     case_line.process_output += bytes(process.readAllStandardOutput().data()).decode()
                     self.case_progress_bar.setValue(60)
                     QtCore.QCoreApplication.processEvents()
                     if process.exitCode():
                         case_exit_codes.append(process.exitCode())                     
                     else:
-                        process_argv = [case_line.text()+'/'+case_line.text().split('/')[-1]+'_out/Forces', '0', '0', '0']
+                        process_argv = [case_line.text()+'/'+case_line.text().split('/')[-1]+'_out/Forces', case_line_text.split("/")[-1], '0', '0', '0']
                         process = QtCore.QProcess()
                         process.start(r'C:/Users/penzo/AppData/Roaming/FreeCAD/Mod/DesignSPHysics/dualsphysics/bin/MixingTools/MixingTorque.exe',process_argv)
                         process.waitForFinished()
