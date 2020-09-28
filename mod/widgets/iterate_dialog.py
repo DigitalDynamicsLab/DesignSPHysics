@@ -123,33 +123,6 @@ class IterateDialog(QtGui.QDialog):
             self.combinations_list.append(params_combination)
         
         self.case_original_path = Case.the().path   
-        # for params_combination in combinations:
-            # if self.simulation_is_cancelled != True:
-                # save_name = ''
-                # nn_target_params = []
-                # for i in range(0,len(self.iteration_params_labels)):          
-                    # if self.iteration_params_labels[i] in self.constants:
-                        # if self.iteration_params_labels[i] == 'rhopg':
-                            # exec('Case.the().constants.rhop0 = float('+params_combination[i]+')')
-                        # else:
-                            # exec('Case.the().constants.'+self.iteration_params_labels[i]+'= float('+params_combination[i]+')')
-                    # elif self.iteration_params_labels[i] in self.parameters:
-                        # exec('Case.the().execution_parameters.'+self.iteration_params_labels[i]+'= float('+params_combination[i]+')')
-                    # elif self.iteration_params_labels[i] in self.nn_constants:
-                        # if self.iteration_params_labels[i] == 'viscop':
-                            # nn_target_params.append(['visco',params_combination[i]])
-                            # exec('Case.the().execution_parameters.visco = float('+params_combination[i]+')')
-                        # elif self.iteration_params_labels[i] == 'rhop':
-                            # nn_target_params.append(['rhop',params_combination[i]])
-                            # exec('Case.the().constants.rhop0 = float('+params_combination[i]+')')
-                        # else:
-                            # nn_target_params.append([self.iteration_params_labels[i],params_combination[i]])                          
-                    # save_name = save_name + '_' + self.iteration_params_labels[i] + params_combination[i]
-            # self.save_name_list.append(case_original_path + save_name)
-            # self.on_save_case(save_name = case_original_path + save_name) 
-            # self.on_execute_gencase(nn_target_params)
-            
-        # self.iter_completed.emit()
         self.on_ex_iterate()
               
     def on_ex_iterate(self):
@@ -167,18 +140,24 @@ class IterateDialog(QtGui.QDialog):
                     exec('Case.the().execution_parameters.'+self.iteration_params_labels[i]+'= float('+params_combination[i]+')')
                 elif self.iteration_params_labels[i] in self.nn_constants:
                     if self.iteration_params_labels[i] == 'viscop':
+                        param_name = 'V';
                         nn_target_params.append(['visco',params_combination[i]])
                         exec('Case.the().execution_parameters.visco = float('+params_combination[i]+')')
                     elif self.iteration_params_labels[i] == 'rhop':
+                        param_name = 'R'
                         nn_target_params.append(['rhop',params_combination[i]])
                         exec('Case.the().constants.rhop0 = float('+params_combination[i]+')')
+                    elif self.iteration_params_labels[i] == 'tau_yield':
+                        param_name = 'Y'
+                        nn_target_params.append(['tau_yield',params_combination[i]])
+                        nn_target_params.append(['tau_max',params_combination[i]])
                     else:
-                        nn_target_params.append([self.iteration_params_labels[i],params_combination[i]])                          
-                save_name = save_name + '_' + self.iteration_params_labels[i] + params_combination[i]
-            #self.save_name_list.append(case_original_path + save_name)
+                        nn_target_params.append([self.iteration_params_labels[i],params_combination[i]]) 
+                save_name = save_name + param_name + str("{:.0e}".format(float(params_combination[i])))
+                save_name = save_name.replace('e+','E')
+                save_name = save_name.replace('e-','e')
             self.on_save_case(save_name = self.case_original_path + save_name) 
             self.on_execute_gencase(nn_target_params)
-            #self.on_load_case(self.save_name_list[self.iter_num]+'/casedata.dsphdata')
             self.device_selector.setCurrentIndex(1) 
             self.on_ex_simulate()
             self.iter_num += 1
