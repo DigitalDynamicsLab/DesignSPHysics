@@ -293,5 +293,6 @@
     "An error occurred during execution. Make sure that parameters exist and are properly defined. You can also check your execution device (update the driver of your GPU). Read the details for more information.": "An error occurred during execution. Make sure that parameters exist and are properly defined. You can also check your execution device (update the driver of your GPU). Read the details for more information.",
     "Opens the Iterator tool.": "Opens the Iterator tool.",
     "Iterator": "Iterator",
-    "Can't add this object to the simulation": "Can't add this object to the simulation"
+    "Can't add this object to the simulation": "Can't add this object to the simulation",
+    "MKFluid": "MKFluid"
 }
