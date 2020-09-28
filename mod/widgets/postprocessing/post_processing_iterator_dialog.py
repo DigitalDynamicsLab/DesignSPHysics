@@ -154,7 +154,7 @@ class PostProcessingIteratorDialog(QtGui.QDialog):
                     if process.exitCode():
                         case_exit_codes.append(process.exitCode())                     
                     else:
-                        process_argv = [case_line.text()+'/'+case_line.text().split('/')[-1]+'_out/Forces', case_line_text.split("/")[-1], '0', '0', '0']
+                        process_argv = [case_line.text()+'/'+case_line.text().split('/')[-1]+'_out/Forces', case_line.text().split("/")[-1], '0', '0', '0']
                         process = QtCore.QProcess()
                         process.start(r'C:/Users/penzo/AppData/Roaming/FreeCAD/Mod/DesignSPHysics/dualsphysics/bin/MixingTools/MixingTorque.exe',process_argv)
                         process.waitForFinished()
