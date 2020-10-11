@@ -12,7 +12,7 @@ from PySide.QtCore import Qt, QProcess
 from mod.dataobjects.case import Case
 from mod.dataobjects.executable_paths import ExecutablePaths
 
-class MixingToolDialog(QDialog):
+class MixingToolsDialog(QDialog):
     
     def __init__(self, post_processing_widget, parent=None):
         super().__init__(parent = parent)

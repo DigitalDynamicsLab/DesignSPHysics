@@ -50,7 +50,42 @@ class IterateDialog(QtGui.QDialog):
             'coefh','cflnumber','h','b','massbound','massfluid']
         self.parameters = ['verletsteps','visco','viscoboundfactor','densitydt_value','shiftcoef','shifttfs','ftpause','coefdtmin','dtini','dtmin',
             'dtallparticles','timemax','timeout','rhopoutmin','rhopoutmax']
-        self.nn_constants = ['rhop','viscop','tau_yield','tau_max','Bi_multi','HBP_m','HBP_n'] 
+        self.nn_constants = ['rhop','viscop','tau_yield','tau_max','Bi_multi','HBP_m','HBP_n']
+
+        self.param_names = {'rhopg':'RG',
+                            'hswl':'HL',
+                            'gamma':'G',
+                            'speedsystem':'MS',
+                            'coefsound':'CS',
+                            'speedsound':'SS',
+                            'coefh':'CH',
+                            'cflnumber':'CFL',
+                            'h':'H',
+                            'b':'B',
+                            'massbound':'MB',
+                            'massfluid':'MF',
+                            'verletsteps':'VS',
+                            'visco':'VG',
+                            'viscoboundfactor':'VB',
+                            'densitydt_value':'DDT',
+                            'shiftcoef':'SH',
+                            'shifttfs':'SHF',
+                            'ftpause':'ftpause',
+                            'coefdtmin':'CT',
+                            'dtini':'TI',
+                            'dtmin':'Tm',
+                            'dtallparticles':'TA',
+                            'timemax':'TM',
+                            'timeout':'TO',
+                            'rhopoutmin':'RGm',
+                            'rhopoutmax':'RGM',
+                            'rhop':'R',
+                            'viscop':'V',
+                            'tau_yield':'Y',
+                            'tau_max':'YM',
+                            'Bi_multi':'Bm',
+                            'HBP_m':'Cm',
+                            'HBP_n':'Cn'}        
         
         self.simulation_is_cancelled = False
         self.simulation_cancelled.connect(self.on_cancel_simulate)
@@ -126,34 +161,37 @@ class IterateDialog(QtGui.QDialog):
         self.on_ex_iterate()
               
     def on_ex_iterate(self):
+        #self.iteration_params_labels.sort()
         if self.iter_num != self.total_iters and self.simulation_is_cancelled != True:
             params_combination = self.combinations_list[self.iter_num]
             save_name = ''
-            nn_target_params = []
+            nn_target_params = []          
             for i in range(0,len(self.iteration_params_labels)):          
                 if self.iteration_params_labels[i] in self.constants:
                     if self.iteration_params_labels[i] == 'rhopg':
                         exec('Case.the().constants.rhop0 = float('+params_combination[i]+')')
                     else:
                         exec('Case.the().constants.'+self.iteration_params_labels[i]+'= float('+params_combination[i]+')')
+                
                 elif self.iteration_params_labels[i] in self.parameters:
-                    exec('Case.the().execution_parameters.'+self.iteration_params_labels[i]+'= float('+params_combination[i]+')')
+                        exec('Case.the().execution_parameters.'+self.iteration_params_labels[i]+'= float('+params_combination[i]+')')
+                
                 elif self.iteration_params_labels[i] in self.nn_constants:
                     if self.iteration_params_labels[i] == 'viscop':
-                        param_name = 'V';
                         nn_target_params.append(['visco',params_combination[i]])
                         exec('Case.the().execution_parameters.visco = float('+params_combination[i]+')')
                     elif self.iteration_params_labels[i] == 'rhop':
-                        param_name = 'R'
                         nn_target_params.append(['rhop',params_combination[i]])
                         exec('Case.the().constants.rhop0 = float('+params_combination[i]+')')
                     elif self.iteration_params_labels[i] == 'tau_yield':
-                        param_name = 'Y'
                         nn_target_params.append(['tau_yield',params_combination[i]])
                         nn_target_params.append(['tau_max',params_combination[i]])
                     else:
                         nn_target_params.append([self.iteration_params_labels[i],params_combination[i]]) 
-                save_name = save_name + param_name + str("{:.0e}".format(float(params_combination[i])))
+                
+                param_name = self.param_names[self.iteration_params_labels[i]]
+                save_name = save_name + param_name + str("{:.1e}".format(float(params_combination[i])/10))
+                save_name = save_name.replace('.','')
                 save_name = save_name.replace('e+','E')
                 save_name = save_name.replace('e-','e')
             self.on_save_case(save_name = self.case_original_path + save_name) 
@@ -464,3 +502,4 @@ class IterateDialog(QtGui.QDialog):
             error_dialog("Error on simulation start. Check that the DualSPHysics executable is correctly set.")
         else:
             run_dialog.show()
+        

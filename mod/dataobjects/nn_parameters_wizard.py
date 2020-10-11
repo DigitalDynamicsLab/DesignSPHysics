@@ -47,9 +47,14 @@ class NNParametersWizard():
                 except:
                     self.gencase_mkfluid_exists = False
                 self.gencase_xml_nn_parameters_exist = False
-                if len(self.gencase_xml_root.findall(".//execution/special")[0].getchildren()) > 0:
-                    self.gencase_xml_nn_parameters_exist = True 
-                else:
+                # if len(self.gencase_xml_root.findall(".//execution/special")[0].getchildren()) > 0:
+                    # self.gencase_xml_nn_parameters_exist = True 
+                gencase_special = self.gencase_xml_root.findall(".//execution/special")[0]
+                for elem in gencase_special.iter():
+                    if elem.tag == 'phase':
+                        self.gencase_xml_nn_parameters_exist = True
+                        break                
+                if self.gencase_xml_nn_parameters_exist == False:
                     self.recover_bad_parameters()
     
     def recover_bad_parameters(self):

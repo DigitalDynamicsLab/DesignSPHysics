@@ -184,12 +184,12 @@ class PhaseParametersTab(QWidget):
     
     def default(self):
         self.phase_density.setText('1000')
-        self.phase_kinematic_viscosity.setText('0.1')
+        self.phase_kinematic_viscosity.setText('0.001')
         self.phase_specific_yield_stress.setText('0.001') 
         self.phase_max_yield_stress.setText('0.0015') 
         self.phase_max_yield_stress_multiplier.setText('10') 
-        self.phase_HBP_m_coefficient.setText('10')
-        self.phase_HBP_n_coefficient.setText('2') 
+        self.phase_HBP_m_coefficient.setText('100')
+        self.phase_HBP_n_coefficient.setText('1') 
         self.phase_type.setCurrentIndex(0)
     
     def indexChange(self):
