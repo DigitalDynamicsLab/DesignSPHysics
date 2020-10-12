@@ -460,5 +460,8 @@
     "Top face": "Top face",
     "Bottom face": "Bottom face",
     "Left face": "Left face",
-    "Right face": "Right face"
+    "Right face": "Right face",
+    "Paraview": "Paraview",
+    "Opens the Paraview launch tool.": "Opens the Paraview launch tool.",
+    "Opens the ParaviewLaunch tool.": "Opens the ParaviewLaunch tool."
 }

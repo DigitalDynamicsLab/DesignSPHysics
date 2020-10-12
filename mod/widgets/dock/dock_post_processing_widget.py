@@ -13,7 +13,6 @@ from mod.widgets.postprocessing.floatinginfo_dialog import FloatingInfoDialog
 from mod.widgets.postprocessing.measuretool_dialog import MeasureToolDialog
 from mod.widgets.postprocessing.isosurface_dialog import IsoSurfaceDialog
 from mod.widgets.postprocessing.flowtool_dialog import FlowToolDialog
-from mod.widgets.postprocessing.mixingtools_dialog import MixingToolsDialog
 from mod.widgets.postprocessing.advanced_post_processing_dialog import AdvancedPostProcessingDialog
 
 
@@ -39,10 +38,10 @@ class DockPostProcessingWidget(QtGui.QWidget):
         self.floatinginfo_button = QtGui.QPushButton(__("FloatingInfo"))
         self.measuretool_button = QtGui.QPushButton(__("MeasureTool"))
         self.flowtool_button = QtGui.QPushButton(__("FlowTool"))
-        self.mixingtools_button = QtGui.QPushButton(__("MixingTools"))
-        self.iterator_button = QtGui.QPushButton(__("Advanced"))
+        self.adavanced_button = QtGui.QPushButton(__("Advanced"))
+        self.paraview_button = QtGui.QPushButton(__("Paraview"))
         
-        self.mixingtools_button.setDisabled(True)
+        self.paraview_button.setDisabled(True)
 
         self.partvtk_button.setToolTip(__("Opens the PartVTK tool."))
         self.computeforces_button.setToolTip(__("Opens the ComputeForces tool."))
@@ -50,8 +49,8 @@ class DockPostProcessingWidget(QtGui.QWidget):
         self.measuretool_button.setToolTip(__("Opens the MeasureTool tool."))
         self.isosurface_button.setToolTip(__("Opens the IsoSurface tool."))
         self.flowtool_button.setToolTip(__("Opens the FlowTool tool."))
-        self.mixingtools_button.setToolTip(__("Opens the MixingTools tool."))
-        self.iterator_button.setToolTip(__("Opens the AdvancedPostProcessing tool."))
+        self.adavanced_button.setToolTip(__("Opens the AdvancedPostProcessing tool."))
+        self.paraview_button.setToolTip(__("Opens the ParaviewLaunch tool."))
 
         self.partvtk_button.clicked.connect(lambda: PartVTKDialog(self, parent=get_fc_main_window()))
         self.computeforces_button.clicked.connect(lambda: ComputeForcesDialog(self, parent=get_fc_main_window()))
@@ -59,8 +58,7 @@ class DockPostProcessingWidget(QtGui.QWidget):
         self.measuretool_button.clicked.connect(lambda: MeasureToolDialog(self, parent=get_fc_main_window()))
         self.isosurface_button.clicked.connect(lambda: IsoSurfaceDialog(self, parent=get_fc_main_window()))
         self.flowtool_button.clicked.connect(lambda: FlowToolDialog(self, parent=get_fc_main_window()))
-        self.mixingtools_button.clicked.connect(lambda: MixingToolsDialog(self, parent=get_fc_main_window()))
-        self.iterator_button.clicked.connect(lambda: AdvancedPostProcessingDialog(self, parent=get_fc_main_window()))
+        self.adavanced_button.clicked.connect(lambda: AdvancedPostProcessingDialog(self, parent=get_fc_main_window()))
 
         self.main_layout.addWidget(self.title_label)
         self.first_row_layout.addWidget(self.partvtk_button)
@@ -69,8 +67,8 @@ class DockPostProcessingWidget(QtGui.QWidget):
         self.first_row_layout.addWidget(self.floatinginfo_button)
         self.second_row_layout.addWidget(self.measuretool_button)
         self.second_row_layout.addWidget(self.flowtool_button)
-        self.second_row_layout.addWidget(self.mixingtools_button)
-        self.second_row_layout.addWidget(self.iterator_button)
+        self.second_row_layout.addWidget(self.adavanced_button)
+        self.second_row_layout.addWidget(self.paraview_button)
 
         self.main_layout.addLayout(self.first_row_layout)
         self.main_layout.addLayout(self.second_row_layout)

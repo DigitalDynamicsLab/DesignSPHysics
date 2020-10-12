@@ -8,6 +8,7 @@ Created on Tue Sep 22 12:19:09 2020
 import os
 import sys
 
+from mod.dataobjects.case import Case
 from PySide import QtGui, QtCore
 
 class AdvancedPostProcessingDialog(QtGui.QDialog):
@@ -40,10 +41,16 @@ class AdvancedPostProcessingDialog(QtGui.QDialog):
         self.isosurface_checkbox = QtGui.QCheckBox("Isosurface")
         self.mixingindex_checkbox = QtGui.QCheckBox("MixingIndex")
         self.mixingtorque_checkbox = QtGui.QCheckBox("MixingTorque")
+
+        self.partfluid_checkbox.setChecked(True)
+        self.boundaryvtk_checkbox.setChecked(True)
+        self.isosurface_checkbox.setChecked(True)
+        self.mixingindex_checkbox.setChecked(True)        
+        self.mixingtorque_checkbox.setChecked(True)    
+    
+        self.partfluid_checkbox.setDisabled(True)
         
-        self.mixingtorque_checkbox.setChecked(True)
-        
-        self.mixingindex_checkbox.setDisabled(True)
+        self.mixingindex_checkbox.clicked.connect(self.on_mixingindex_checked)
         
         self.partvtk_groupbox_layout = QtGui.QVBoxLayout()
         self.partvtk_groupbox_layout.addWidget(self.partfluid_checkbox)
@@ -77,9 +84,23 @@ class AdvancedPostProcessingDialog(QtGui.QDialog):
         self.main_layout.addLayout(self.buttons_layout)
         
         self.setLayout(self.main_layout)
+        
+        case_line = CaseLine()
+        case_line.setText(Case.the().path)     
+        self.case_path_lines.append(case_line) 
+        self.main_layout.addWidget(case_line)
+        case_line.remove.triggered.connect(self.on_remove_case)
                 
         self.show()
-        
+    
+    def on_mixingindex_checked(self):
+        if self.mixingindex_checkbox.isChecked():
+            if not self.partfluid_checkbox.isChecked():
+                self.partfluid_checkbox.setChecked(True)
+            self.partfluid_checkbox.setDisabled(True)
+        else:
+            self.partfluid_checkbox.setEnabled(True)            
+  
     def on_run_button(self):              
             
         case_counter = 0          
@@ -100,7 +121,6 @@ class AdvancedPostProcessingDialog(QtGui.QDialog):
                     case_line.process_output += bytes(process.readAllStandardOutput().data()).decode()
                     case_exit_codes.append(process.exitCode())               
                 self.case_progress_bar.setValue(10)
-                #QtCore.QCoreApplication.processEvents()
                     
                 if self.isosurface_checkbox.isChecked():
                     process_argv = ['-saveiso IsoSurface\Isosurface.vtk']
@@ -111,7 +131,6 @@ class AdvancedPostProcessingDialog(QtGui.QDialog):
                     case_line.process_output += bytes(process.readAllStandardOutput().data()).decode()
                     case_exit_codes.append(process.exitCode())
                 self.case_progress_bar.setValue(20)
-                #QtCore.QCoreApplication.processEvents()
                         
                 if self.partfluid_checkbox.isChecked():
                     process_argv = ['-savevtk PartFluid/PartFluid.vtk', '-onlytype:-moving,-fixed', '-filexml dir/AUTO', '-vars:+idp']
@@ -122,7 +141,6 @@ class AdvancedPostProcessingDialog(QtGui.QDialog):
                     case_line.process_output += bytes(process.readAllStandardOutput().data()).decode()
                     case_exit_codes.append(process.exitCode())
                 self.case_progress_bar.setValue(30)
-                #QtCore.QCoreApplication.processEvents()
                         
                 if self.partfixed_checkbox.isChecked():
                     process_argv = ['-savevtk PartFixed/PartFixed.vtk', '-onlytype:-moving,-fluid', '-filexml dir/AUTO']
@@ -133,7 +151,6 @@ class AdvancedPostProcessingDialog(QtGui.QDialog):
                     case_line.process_output += bytes(process.readAllStandardOutput().data()).decode()
                     case_exit_codes.append(process.exitCode())
                 self.case_progress_bar.setValue(40)
-                #QtCore.QCoreApplication.processEvents()
                         
                 if self.partmoving_checkbox.isChecked():
                     process_argv = ['-savevtk PartMoving/PartMoving.vtk', '-onlytype:-fixed,-fluid', '-filexml dir/AUTO']
@@ -144,7 +161,17 @@ class AdvancedPostProcessingDialog(QtGui.QDialog):
                     case_line.process_output += bytes(process.readAllStandardOutput().data()).decode()
                     case_exit_codes.append(process.exitCode())
                 self.case_progress_bar.setValue(50)
-                #QtCore.QCoreApplication.processEvents()
+                
+                if self.mixingindex_checkbox.isChecked():
+                    path = Case.the().path + '/' + Case.the().path.split('/')[-1] + '_out/PartFluid'
+                    process_argv = [path, '1', '10', '1', '1']
+                    process = QtCore.QProcess()
+                    process.start(r'C:\Users\penzo\AppData\Roaming\FreeCAD\Mod\DesignSPHysics\dualsphysics\bin\MixingTools\MixingIndex.exe',process_argv)
+                    process.readyRead.connect(lambda: QtCore.QCoreApplication.processEvents())
+                    process.waitForFinished(-1)
+                    case_line.process_output += bytes(process.readAllStandardOutput().data()).decode()
+                    case_exit_codes.append(process.exitCode())
+                self.case_progress_bar.setValue(60)
                 
                 if self.mixingtorque_checkbox.isChecked():
                     process_argv = ['-onlymk:11', '-savevtk Forces/Forces.vtk']
@@ -153,8 +180,7 @@ class AdvancedPostProcessingDialog(QtGui.QDialog):
                     process.readyRead.connect(lambda: QtCore.QCoreApplication.processEvents())
                     process.waitForFinished(-1)
                     case_line.process_output += bytes(process.readAllStandardOutput().data()).decode()
-                    self.case_progress_bar.setValue(60)
-                    #QtCore.QCoreApplication.processEvents()
+                    self.case_progress_bar.setValue(70)
                     if process.exitCode():
                         case_exit_codes.append(process.exitCode())                     
                     else:
@@ -165,8 +191,7 @@ class AdvancedPostProcessingDialog(QtGui.QDialog):
                         process.waitForFinished()
                         case_line.process_output += bytes(process.readAllStandardOutput().data()).decode()
                         case_exit_codes.append(process.exitCode())  
-                        self.case_progress_bar.setValue(70)
-                        #QtCore.QCoreApplication.processEvents()
+                        self.case_progress_bar.setValue(80)
                         
                 if 1 in case_exit_codes:
                     case_line.addAction(case_line.failed,QtGui.QLineEdit().TrailingPosition)                       
