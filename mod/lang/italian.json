@@ -463,5 +463,8 @@
     "Right face": "Right face",
     "Paraview": "Paraview",
     "Opens the Paraview launch tool.": "Opens the Paraview launch tool.",
-    "Opens the ParaviewLaunch tool.": "Opens the ParaviewLaunch tool."
+    "Opens the ParaviewLaunch tool.": "Opens the ParaviewLaunch tool.",
+    "DualSPHysics Suite Feature Report": "DualSPHysics Suite Feature Report",
+    "Supported": "Supported",
+    "Not supported": "Not supported"
 }

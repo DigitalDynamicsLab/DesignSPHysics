@@ -9,6 +9,7 @@ from mod.stdout_tools import debug
 from mod.constants import VERSION, SUPPORTED_TYPES, MKFLUID_LIMIT
 from mod.enums import ObjectType
 
+from mod.dataobjects.postpro import PostPro
 from mod.dataobjects.inletoutlet.inlet_outlet_config import InletOutletConfig
 from mod.dataobjects.chrono.chrono_config import ChronoConfig
 from mod.dataobjects.constants import Constants
@@ -57,6 +58,8 @@ class Case():
         self.inlet_outlet: InletOutletConfig = InletOutletConfig()
         self.moorings: MooringsConfiguration = MooringsConfiguration()
         self.chrono: ChronoConfig = ChronoConfig()
+        self.postpro: PostPro = PostPro()
+        
 
     @staticmethod
     def the() -> "Case":

@@ -8,6 +8,7 @@ import shutil
 
 from PySide import QtCore
 
+from mod.dataobjects.case import Case
 from mod.translation_tools import __
 from mod.dialog_tools import error_dialog, info_dialog
 from mod.freecad_tools import get_fc_main_window
@@ -15,8 +16,7 @@ from mod.file_tools import get_total_exported_parts_from_disk, save_measuretool_
 from mod.executable_tools import ensure_process_is_executable_or_fail
 
 from mod.widgets.postprocessing.export_progress_dialog import ExportProgressDialog
-
-
+        
 def partvtk_export(options, case, post_processing_widget) -> None:
     """ Export VTK button behaviour. Launches a process while disabling the button. """
     post_processing_widget.adapt_to_export_start()

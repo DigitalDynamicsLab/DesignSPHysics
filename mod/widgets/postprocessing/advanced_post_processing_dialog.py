@@ -8,7 +8,12 @@ Created on Tue Sep 22 12:19:09 2020
 import os
 import sys
 
+import FreeCAD
+
+from mod import file_tools
 from mod.dataobjects.case import Case
+from mod.executable_tools import ensure_process_is_executable_or_fail
+
 from PySide import QtGui, QtCore
 
 class AdvancedPostProcessingDialog(QtGui.QDialog):
@@ -16,23 +21,25 @@ class AdvancedPostProcessingDialog(QtGui.QDialog):
     def __init__(self, post_processing_widget, parent=None):
         super().__init__(parent=parent)
         
-        #self.setSizePolicy(QtGui.QSizePolicy().Expanding,QtGui.QSizePolicy().Expanding)
         self.setWindowTitle("Post processing iterators")
-        
+                    
         self.progress_bar = None
+        self.case_counter = 0
+        self.case_exit_codes = []
         self.case_path_lines = []
                 
         self.add_case_button = QtGui.QPushButton("Add case")
         self.run_button = QtGui.QPushButton("Run")
-        self.cancel_button = QtGui.QPushButton("Cancel")
-        
-        self.add_case_button.clicked.connect(self.on_add_case)
-        self.run_button.clicked.connect(self.on_run_button)
+        self.settings_button = QtGui.QPushButton("Settings")
         
         self.buttons_layout = QtGui.QHBoxLayout()
         self.buttons_layout.addWidget(self.add_case_button)
         self.buttons_layout.addWidget(self.run_button)
-        self.buttons_layout.addWidget(self.cancel_button)
+        self.buttons_layout.addWidget(self.settings_button)
+        
+        self.add_case_button.clicked.connect(self.on_add_case)
+        self.run_button.clicked.connect(self.on_run_button)
+        self.settings_button.clicked.connect(lambda: AdvancedPostProSettings(self))
         
         self.partfluid_checkbox = QtGui.QCheckBox("Fluid")
         self.partfixed_checkbox = QtGui.QCheckBox("Fixed")
@@ -75,6 +82,7 @@ class AdvancedPostProcessingDialog(QtGui.QDialog):
         
         self.case_progress_bar.setValue(0)
         self.progress_bar.setValue(0)
+        self.run_button.clicked.connect(lambda: self.progress_bar.setValue(0))
              
         self.main_layout = QtGui.QVBoxLayout()
         self.main_layout.setSizeConstraint(QtGui.QLayout.SetFixedSize)
@@ -101,113 +109,143 @@ class AdvancedPostProcessingDialog(QtGui.QDialog):
         else:
             self.partfluid_checkbox.setEnabled(True)            
   
-    def on_run_button(self):              
+    def on_process_finished(self,case_line,process):
+        case_line.process_output += bytes(process.readAllStandardOutput().data()).decode()
+        self.case_exit_codes.append(process.exitCode())
+    
+    def boundaryvtk(self,case_line):
+        self.case_progress_bar.setValue(10)
+        if self.boundaryvtk_checkbox.isChecked():
+            path = os.path.abspath(FreeCAD.getUserAppDataDir() + 'Mod/DesignSPHysics/dualsphysics/bin/' + Case.the().executable_paths.boundaryvtk.split('/')[-1])
+            ensure_process_is_executable_or_fail(path)
+            process_argv = ['-loadvtk *_Actual.vtk','-filexml AUTO','-motiondata .','-savevtkdata BoundaryMoving\BoundaryMoving.vtk',
+                           '-onlytype:moving','-savevtkdata Boundary.vtk','-onlytype:fixed']
+            process = QtCore.QProcess()
+            process.start(path,process_argv)
+            process.finished.connect(lambda: self.on_process_finished(case_line,process))
+            process.finished.connect(lambda: self.isosurface(case_line))   
+        else:
+            self.isosurface(case_line)
+    
+    def isosurface(self,case_line):
+        self.case_progress_bar.setValue(20)
+        if self.isosurface_checkbox.isChecked():
+            path = os.path.abspath(FreeCAD.getUserAppDataDir() + 'Mod/DesignSPHysics/dualsphysics/bin/' + Case.the().executable_paths.isosurface.split('/')[-1])
+            ensure_process_is_executable_or_fail(path)
+            process_argv = ['-saveiso IsoSurface\Isosurface.vtk']
+            process = QtCore.QProcess()
+            process.start(path,process_argv)
+            process.finished.connect(lambda: self.on_process_finished(case_line,process))
+            process.finished.connect(lambda: self.partfluid(case_line))
+        else:
+            self.partfluid(case_line)
             
-        case_counter = 0          
-        for case_line in self.case_path_lines:   
-            case_exit_codes = []
+    def partfluid(self,case_line):
+        self.case_progress_bar.setValue(30)
+        if self.partfluid_checkbox.isChecked():
+            path = os.path.abspath(FreeCAD.getUserAppDataDir() + 'Mod/DesignSPHysics/dualsphysics/bin/' + Case.the().executable_paths.partvtk.split('/')[-1])
+            ensure_process_is_executable_or_fail(path)
+            process_argv = ['-savevtk PartFluid/PartFluid.vtk', '-onlytype:-moving,-fixed', '-filexml dir/AUTO', '-vars:+idp']
+            process = QtCore.QProcess()
+            process.start(path,process_argv)
+            process.finished.connect(lambda: self.on_process_finished(case_line,process))
+            process.finished.connect(lambda: self.partfixed(case_line))
+        else:
+            self.partfixed(case_line)
+            
+    def partfixed(self,case_line):
+        self.case_progress_bar.setValue(40)
+        if self.partfixed_checkbox.isChecked():
+            path = os.path.abspath(FreeCAD.getUserAppDataDir() + 'Mod/DesignSPHysics/dualsphysics/bin/' + Case.the().executable_paths.partvtk.split('/')[-1])
+            ensure_process_is_executable_or_fail(path)
+            process_argv = ['-savevtk PartFixed/PartFixed.vtk', '-onlytype:-moving,-fluid', '-filexml dir/AUTO']
+            process = QtCore.QProcess()
+            process.start(path,process_argv)
+            process.finished.connect(lambda: self.on_process_finished(case_line,process))
+            process.finished.connect(lambda: self.partmoving(case_line))
+        else:
+            self.partmoving(case_line)
+            
+    def partmoving(self,case_line):
+        self.case_progress_bar.setValue(50)
+        if self.partmoving_checkbox.isChecked():
+            path = os.path.abspath(FreeCAD.getUserAppDataDir() + 'Mod/DesignSPHysics/dualsphysics/bin/' + Case.the().executable_paths.partvtk.split('/')[-1])
+            ensure_process_is_executable_or_fail(path)
+            process_argv = ['-savevtk PartMoving/PartMoving.vtk', '-onlytype:-fixed,-fluid', '-filexml dir/AUTO']
+            process = QtCore.QProcess()
+            process.start(path,process_argv)
+            process.finished.connect(lambda: self.on_process_finished(case_line,process))
+            process.finished.connect(lambda: self.mixingindex(case_line))
+        else:
+            self.mixingindex(case_line)
+        
+    def mixingindex(self,case_line):
+        self.case_progress_bar.setValue(60)
+        if self.mixingindex_checkbox.isChecked():
+            path = os.path.abspath(FreeCAD.getUserAppDataDir() + 'Mod/DesignSPHysics/dualsphysics/bin/MixingTools/MixingIndex.exe')
+            ensure_process_is_executable_or_fail(path)
+            dirin1 = Case.the().path + '/' + Case.the().path.split('/')[-1] + '_out/PartFluid'
+            dirin2 = Case.the().path + '/' + Case.the().path.split('/')[-1] + '_out/IsoSurface'
+            process_argv = [dirin1,dirin2,Case.the().postpro.mixingindex_timestep,Case.the().postpro.mixingindex_x_subdiv,
+                Case.the().postpro.mixingindex_y_subdiv,Case.the().postpro.mixingindex_z_subdiv]
+            process = QtCore.QProcess()
+            process.start(path,process_argv)
+            process.finished.connect(lambda: self.on_process_finished(case_line,process))
+            process.finished.connect(lambda: self.computeforce(case_line))
+        else:
+            self.computeforce(case_line)
+    
+    def computeforce(self,case_line): 
+        self.case_progress_bar.setValue(70)
+        if self.mixingtorque_checkbox.isChecked():
+            path = os.path.abspath(FreeCAD.getUserAppDataDir() + 'Mod/DesignSPHysics/dualsphysics/bin/' + Case.the().executable_paths.computeforces.split('/')[-1])
+            ensure_process_is_executable_or_fail(path)
+            process_argv = ['-onlymk:'+Case.the().postpro.computeforce_mk, '-savevtk Forces/Forces.vtk']
+            process = QtCore.QProcess()
+            process.start(path,process_argv)
+            process.finished.connect(lambda: self.on_process_finished(case_line,process))
+            process.finished.connect(lambda: self.mixingtorque(case_line,process))
+        else:
+            self.mixingtorque(case_line)
+        
+    def mixingtorque(self,case_line,process):
+        self.case_counter += 1
+        self.case_progress_bar.setValue(80)
+        if not process.exitCode():
+            path = os.path.abspath(FreeCAD.getUserAppDataDir() + 'Mod/DesignSPHysics/dualsphysics/bin/MixingTools/MixingTorque.exe')
+            ensure_process_is_executable_or_fail(path)
+            process_argv = [case_line.text()+'/'+case_line.text().split('/')[-1]+'_out/Forces', case_line.text().split("/")[-1], 
+                Case.the().postpro.mixingtorque_x_point, Case.the().postpro.mixingtorque_y_point, Case.the().postpro.mixingtorque_z_point]
+            process = QtCore.QProcess()
+            process.start(path,process_argv)
+            process.finished.connect(lambda: self.on_process_finished(case_line,process))
+            process.finished.connect(lambda: self.on_case_finished(case_line))
+            process.finished.connect(self.on_run_button)
+        else:
+            self.on_case_finished(case_line)
+            self.on_run_button()
+            
+    def on_run_button(self): 
+        
+        if self.case_counter < len(self.case_path_lines):
+            case_line = self.case_path_lines[self.case_counter] 
             if os.path.isfile(case_line.text()+'/casedata.dsphdata'):
                 case_line.removeAction(case_line.remove)                
-                cwd = os.getcwd()
-                os.chdir(case_line.text()+'/'+case_line.text().split('/')[-1]+'_out')
-                
-                if self.boundaryvtk_checkbox.isChecked():
-                    process_argv = ['-loadvtk *_Actual.vtk','-filexml AUTO','-motiondata .','-savevtkdata BoundaryMoving\BoundaryMoving.vtk',
-                                   '-onlytype:moving','-savevtkdata Boundary.vtk','-onlytype:fixed']
-                    process = QtCore.QProcess()
-                    process.start(r'C:/Users/penzo/AppData/Roaming/FreeCAD/Mod/DesignSPHysics/dualsphysics/bin/BoundaryVTK_win64.exe',process_argv)
-                    process.readyRead.connect(lambda: QtCore.QCoreApplication.processEvents())
-                    process.waitForFinished()
-                    case_line.process_output += bytes(process.readAllStandardOutput().data()).decode()
-                    case_exit_codes.append(process.exitCode())               
-                self.case_progress_bar.setValue(10)
-                    
-                if self.isosurface_checkbox.isChecked():
-                    process_argv = ['-saveiso IsoSurface\Isosurface.vtk']
-                    process = QtCore.QProcess()
-                    process.start(r'C:/Users/penzo/AppData/Roaming/FreeCAD/Mod/DesignSPHysics/dualsphysics/bin/IsoSurface4_win64.exe',process_argv)
-                    process.readyRead.connect(lambda: QtCore.QCoreApplication.processEvents())
-                    process.waitForFinished()
-                    case_line.process_output += bytes(process.readAllStandardOutput().data()).decode()
-                    case_exit_codes.append(process.exitCode())
-                self.case_progress_bar.setValue(20)
-                        
-                if self.partfluid_checkbox.isChecked():
-                    process_argv = ['-savevtk PartFluid/PartFluid.vtk', '-onlytype:-moving,-fixed', '-filexml dir/AUTO', '-vars:+idp']
-                    process = QtCore.QProcess()
-                    process.start(r'C:/Users/penzo/AppData/Roaming/FreeCAD/Mod/DesignSPHysics/dualsphysics/bin/PartVTK_win64.exe',process_argv)
-                    process.readyRead.connect(lambda: QtCore.QCoreApplication.processEvents())
-                    process.waitForFinished()
-                    case_line.process_output += bytes(process.readAllStandardOutput().data()).decode()
-                    case_exit_codes.append(process.exitCode())
-                self.case_progress_bar.setValue(30)
-                        
-                if self.partfixed_checkbox.isChecked():
-                    process_argv = ['-savevtk PartFixed/PartFixed.vtk', '-onlytype:-moving,-fluid', '-filexml dir/AUTO']
-                    process = QtCore.QProcess()
-                    process.start(r'C:/Users/penzo/AppData/Roaming/FreeCAD/Mod/DesignSPHysics/dualsphysics/bin/PartVTK_win64.exe',process_argv)
-                    process.readyRead.connect(lambda: QtCore.QCoreApplication.processEvents())
-                    process.waitForFinished()
-                    case_line.process_output += bytes(process.readAllStandardOutput().data()).decode()
-                    case_exit_codes.append(process.exitCode())
-                self.case_progress_bar.setValue(40)
-                        
-                if self.partmoving_checkbox.isChecked():
-                    process_argv = ['-savevtk PartMoving/PartMoving.vtk', '-onlytype:-fixed,-fluid', '-filexml dir/AUTO']
-                    process = QtCore.QProcess()
-                    process.start(r'C:/Users/penzo/AppData/Roaming/FreeCAD/Mod/DesignSPHysics/dualsphysics/bin/PartVTK_win64.exe',process_argv)
-                    process.readyRead.connect(lambda: QtCore.QCoreApplication.processEvents())
-                    process.waitForFinished()
-                    case_line.process_output += bytes(process.readAllStandardOutput().data()).decode()
-                    case_exit_codes.append(process.exitCode())
-                self.case_progress_bar.setValue(50)
-                
-                if self.mixingindex_checkbox.isChecked():
-                    path = Case.the().path + '/' + Case.the().path.split('/')[-1] + '_out/PartFluid'
-                    process_argv = [path, '1', '10', '1', '1']
-                    process = QtCore.QProcess()
-                    process.start(r'C:\Users\penzo\AppData\Roaming\FreeCAD\Mod\DesignSPHysics\dualsphysics\bin\MixingTools\MixingIndex.exe',process_argv)
-                    process.readyRead.connect(lambda: QtCore.QCoreApplication.processEvents())
-                    process.waitForFinished(-1)
-                    case_line.process_output += bytes(process.readAllStandardOutput().data()).decode()
-                    case_exit_codes.append(process.exitCode())
-                self.case_progress_bar.setValue(60)
-                
-                if self.mixingtorque_checkbox.isChecked():
-                    process_argv = ['-onlymk:11', '-savevtk Forces/Forces.vtk']
-                    process = QtCore.QProcess()
-                    process.start(r'C:/Users/penzo/AppData/Roaming/FreeCAD/Mod/DesignSPHysics/dualsphysics/bin/ComputeForces4_win64.exe',process_argv)
-                    process.readyRead.connect(lambda: QtCore.QCoreApplication.processEvents())
-                    process.waitForFinished(-1)
-                    case_line.process_output += bytes(process.readAllStandardOutput().data()).decode()
-                    self.case_progress_bar.setValue(70)
-                    if process.exitCode():
-                        case_exit_codes.append(process.exitCode())                     
-                    else:
-                        process_argv = [case_line.text()+'/'+case_line.text().split('/')[-1]+'_out/Forces', case_line.text().split("/")[-1], '0', '0', '0']
-                        process = QtCore.QProcess()
-                        process.start(r'C:/Users/penzo/AppData/Roaming/FreeCAD/Mod/DesignSPHysics/dualsphysics/bin/MixingTools/MixingTorque.exe',process_argv)
-                        process.readyRead.connect(lambda: QtCore.QCoreApplication.processEvents())
-                        process.waitForFinished()
-                        case_line.process_output += bytes(process.readAllStandardOutput().data()).decode()
-                        case_exit_codes.append(process.exitCode())  
-                        self.case_progress_bar.setValue(80)
-                        
-                if 1 in case_exit_codes:
-                    case_line.addAction(case_line.failed,QtGui.QLineEdit().TrailingPosition)                       
-                else:
-                    case_line.addAction(case_line.success,QtGui.QLineEdit().TrailingPosition)
-                    
-                case_counter += 1
-                self.case_progress_bar.setValue(100)
-                self.progress_bar.setValue(100*case_counter/len(self.case_path_lines))
-                QtCore.QCoreApplication.processEvents()
-                       
-                os.chdir(cwd)
-                      
-        if len(self.case_path_lines) > 0:
-            self.progress_bar.setValue(100)                 
-               
+                self.cwd = os.getcwd()
+                os.chdir(case_line.text()+'/'+case_line.text().split('/')[-1]+'_out')         
+                self.boundaryvtk(case_line) 
+        else:
+            self.case_counter = 0
+    
+    def on_case_finished(self,case_line):
+        os.chdir(self.cwd)
+        self.case_progress_bar.setValue(100)
+        self.progress_bar.setValue(100*self.case_counter/len(self.case_path_lines))
+        if 1 in self.case_exit_codes:
+            case_line.addAction(case_line.failed,QtGui.QLineEdit().TrailingPosition)                       
+        else:
+            case_line.addAction(case_line.success,QtGui.QLineEdit().TrailingPosition)
+        
     def on_add_case(self):   
         
         file_dialog = MultiSelectDirDialog()
@@ -230,7 +268,82 @@ class AdvancedPostProcessingDialog(QtGui.QDialog):
         self.case_path_lines.remove(case_line)
         self.main_layout.removeWidget(case_line)
         case_line.deleteLater()
-                   
+
+class AdvancedPostProSettings(QtGui.QDialog):
+    def __init__(self,parent = None):
+        super().__init__(parent = parent)
+               
+        self.mixingindex_timestep = QtGui.QLineEdit(Case.the().postpro.mixingindex_timestep)
+        self.mixingindex_x_subdiv = QtGui.QLineEdit(Case.the().postpro.mixingindex_x_subdiv)
+        self.mixingindex_y_subdiv = QtGui.QLineEdit(Case.the().postpro.mixingindex_y_subdiv)
+        self.mixingindex_z_subdiv = QtGui.QLineEdit(Case.the().postpro.mixingindex_z_subdiv)
+        
+        label_layout = QtGui.QVBoxLayout()
+        label_layout.addWidget(QtGui.QLabel("Calculation time step:"))
+        label_layout.addWidget(QtGui.QLabel("Domain X axis subdivisions:"))
+        label_layout.addWidget(QtGui.QLabel("Domain Y axis subdivisions:"))
+        label_layout.addWidget(QtGui.QLabel("Domain Z axis subdivisions:"))
+        lineedit_layout = QtGui.QVBoxLayout()
+        lineedit_layout.addWidget(self.mixingindex_timestep)
+        lineedit_layout.addWidget(self.mixingindex_x_subdiv)
+        lineedit_layout.addWidget(self.mixingindex_y_subdiv)
+        lineedit_layout.addWidget(self.mixingindex_z_subdiv)
+        layout = QtGui.QHBoxLayout()
+        layout.addLayout(label_layout)
+        layout.addLayout(lineedit_layout)
+        self.mixingindex_groupbox = QtGui.QGroupBox("MixingIndex") 
+        self.mixingindex_groupbox.setLayout(layout)
+               
+        self.computeforce_mk = QtGui.QLineEdit(Case.the().postpro.computeforce_mk)         
+        self.mixingtorque_x_point = QtGui.QLineEdit(Case.the().postpro.mixingtorque_x_point)
+        self.mixingtorque_y_point = QtGui.QLineEdit(Case.the().postpro.mixingtorque_y_point)
+        self.mixingtorque_z_point = QtGui.QLineEdit(Case.the().postpro.mixingtorque_z_point)
+    
+        label_layout = QtGui.QVBoxLayout()
+        label_layout.addWidget(QtGui.QLabel("Rotor Mk:"))
+        label_layout.addWidget(QtGui.QLabel("Axis X point coordinate:"))
+        label_layout.addWidget(QtGui.QLabel("Axis Y point coordinate:"))
+        label_layout.addWidget(QtGui.QLabel("Axis Z point coordinate:"))
+        lineedit_layout = QtGui.QVBoxLayout()
+        lineedit_layout.addWidget(self.computeforce_mk)
+        lineedit_layout.addWidget(self.mixingtorque_x_point)
+        lineedit_layout.addWidget(self.mixingtorque_y_point)
+        lineedit_layout.addWidget(self.mixingtorque_z_point)
+        layout = QtGui.QHBoxLayout()
+        layout.addLayout(label_layout)
+        layout.addLayout(lineedit_layout)
+        self.mixingtorque_groupbox = QtGui.QGroupBox("MixingTorque") 
+        self.mixingtorque_groupbox.setLayout(layout)        
+        
+        self.apply_button = QtGui.QPushButton("Apply")
+        self.apply_button.clicked.connect(self.on_apply_button)
+        
+        self.main_layout = QtGui.QVBoxLayout()
+        self.main_layout.addWidget(self.mixingindex_groupbox)
+        self.main_layout.addWidget(self.mixingtorque_groupbox)
+        self.main_layout.addWidget(self.apply_button)
+        
+        self.setLayout(self.main_layout)
+        
+        self.show()
+        
+    def on_apply_button(self):
+        Case.the().postpro.mixingindex_timestep = self.mixingindex_timestep.text()
+        Case.the().postpro.mixingindex_x_subdiv = self.mixingindex_x_subdiv.text()
+        Case.the().postpro.mixingindex_y_subdiv = self.mixingindex_y_subdiv.text()
+        Case.the().postpro.mixingindex_z_subdiv = self.mixingindex_z_subdiv.text() 
+        
+        Case.the().postpro.computeforce_mk = self.computeforce_mk.text()
+        
+        Case.the().postpro.mixingtorque_x_point = self.mixingtorque_x_point.text()
+        Case.the().postpro.mixingtorque_y_point = self.mixingtorque_y_point.text()
+        Case.the().postpro.mixingtorque_z_point = self.mixingtorque_z_point.text()
+        
+        file_tools.save_case(Case.the().path,Case.the())
+        
+        self.close()
+        
+                  
 class CaseLine(QtGui.QLineEdit):
     
     def __init__(self,parent = None):
