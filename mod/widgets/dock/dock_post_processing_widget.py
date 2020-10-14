@@ -18,6 +18,7 @@ from mod.widgets.postprocessing.measuretool_dialog import MeasureToolDialog
 from mod.widgets.postprocessing.isosurface_dialog import IsoSurfaceDialog
 from mod.widgets.postprocessing.flowtool_dialog import FlowToolDialog
 from mod.widgets.postprocessing.advanced_post_processing_dialog import AdvancedPostProcessingDialog
+from mod.paraview.pv_tools import PvSettingsDialog
 
 from mod.paraview.pv_tools import open_paraview_client
 
@@ -44,7 +45,13 @@ class DockPostProcessingWidget(QtGui.QWidget):
         self.measuretool_button = QtGui.QPushButton(__("MeasureTool"))
         self.flowtool_button = QtGui.QPushButton(__("FlowTool"))
         self.advanced_button = QtGui.QPushButton(__("Advanced"))
+        
         self.paraview_button = QtGui.QPushButton(__("Paraview"))
+        self.paraview_menu = QtGui.QMenu()
+        self.paraview_menu.addAction(__("Open Paraview"))
+        self.paraview_menu.addAction(__("Options"))
+        self.paraview_menu.triggered.connect(self.on_paraview_menu)
+        self.paraview_button.setMenu(self.paraview_menu)
 
         self.partvtk_button.setToolTip(__("Opens the PartVTK tool."))
         self.computeforces_button.setToolTip(__("Opens the ComputeForces tool."))
@@ -53,7 +60,7 @@ class DockPostProcessingWidget(QtGui.QWidget):
         self.isosurface_button.setToolTip(__("Opens the IsoSurface tool."))
         self.flowtool_button.setToolTip(__("Opens the FlowTool tool."))
         self.advanced_button.setToolTip(__("Opens the AdvancedPostProcessing tool."))
-        self.paraview_button.setToolTip(__("Opens the ParaviewLaunch tool."))
+        self.paraview_button.setToolTip(__("Paraview results menu."))
 
         self.partvtk_button.clicked.connect(lambda: PartVTKDialog(self, parent=get_fc_main_window()))
         self.computeforces_button.clicked.connect(lambda: ComputeForcesDialog(self, parent=get_fc_main_window()))
@@ -62,7 +69,6 @@ class DockPostProcessingWidget(QtGui.QWidget):
         self.isosurface_button.clicked.connect(lambda: IsoSurfaceDialog(self, parent=get_fc_main_window()))
         self.flowtool_button.clicked.connect(lambda: FlowToolDialog(self, parent=get_fc_main_window()))
         self.advanced_button.clicked.connect(lambda: AdvancedPostProcessingDialog(self, parent=get_fc_main_window()))
-        self.paraview_button.clicked.connect(open_paraview_client)
 
         self.main_layout.addWidget(self.title_label)
         self.first_row_layout.addWidget(self.partvtk_button)
@@ -79,6 +85,12 @@ class DockPostProcessingWidget(QtGui.QWidget):
 
         self.setLayout(self.main_layout)
     
+    def on_paraview_menu(self,action):
+        if __("Open Paraview") in action.text():
+            open_paraview_client()
+        elif __("Options") in action.text():
+            PvSettingsDialog(self)
+            
     def adapt_to_export_start(self) -> None:
         """ Adapts the widget to post processing tool start. """
         self.setWindowTitle("<b>{} ({})</b>".format(__("Post-processing"), __("Exporting")))

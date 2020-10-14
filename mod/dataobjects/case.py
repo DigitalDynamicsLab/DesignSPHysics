@@ -25,6 +25,7 @@ from mod.dataobjects.mk_based_properties import MKBasedProperties
 from mod.dataobjects.damping import Damping
 from mod.dataobjects.moorings.moorings_configuration import MooringsConfiguration
 
+from mod.paraview.pv_param import PvParam
 
 class Case():
     """ Main data structure for the data inside a case properties, objects
@@ -58,7 +59,8 @@ class Case():
         self.inlet_outlet: InletOutletConfig = InletOutletConfig()
         self.moorings: MooringsConfiguration = MooringsConfiguration()
         self.chrono: ChronoConfig = ChronoConfig()
-        self.postpro: PostPro = PostPro()        
+        self.postpro: PostPro = PostPro()
+        self.pvparam: PvParam = PvParam()
 
     @staticmethod
     def the() -> "Case":

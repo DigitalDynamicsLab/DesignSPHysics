@@ -94,7 +94,7 @@ def floatinginfo_export(options, case, post_processing_widget) -> None:
 
     # Build parameters
     executable_parameters = ["-dirin {}".format(case.get_out_folder_path()),
-                             "-savedata {out_path}{file_name}".format(out_path=case.get_out_folder_path(), file_name=options["filename"]),
+                             "-savedata {out_path}{file_name}/{file_name}".format(out_path=case.get_out_folder_path(), file_name=options["filename"]),
                              options["additional_parameters"]]
 
     if options["onlyprocess"]:
@@ -207,7 +207,7 @@ def measuretool_export(options, case, post_processing_widget) -> None:
 
     executable_parameters = ["-dirin {out_path}".format(out_path=case.get_out_folder_path()),
                              "-filexml {out_path}{case_name}.xml".format(out_path=case.get_out_folder_path(), case_name=case.name),
-                             "{save_flag} {out_path}{file_name}".format(save_flag=save_flag, out_path=case.get_out_folder_path(), file_name=options["filename"]),
+                             "{save_flag} {out_path}{file_name}/{file_name}".format(save_flag=save_flag, out_path=case.get_out_folder_path(), file_name=options["filename"]),
                              "-points {case_path}/points.txt".format(case_path=case.path),
                              "-vars:{save_vars}".format(save_vars=options["save_vars"]),
                              "-height" if options["calculate_water_elevation"] else "",
@@ -317,8 +317,8 @@ def flowtool_export(options, case, post_processing_widget) -> None:
 
     executable_parameters = ["-dirin {}".format(case.get_out_folder_path()),
                              "-fileboxes {case_path}/fileboxes.txt".format(case_path=case.path),
-                             "-savecsv {out_path}{file_name}.csv".format(out_path=case.get_out_folder_path(), file_name=options["csv_name"]),
-                             "-savevtk {out_path}{file_name}.vtk".format(out_path=case.get_out_folder_path(), file_name=options["vtk_name"]),
+                             "-savecsv {out_path}{file_name}/{file_name}.csv".format(out_path=case.get_out_folder_path(), file_name=options["csv_name"]),
+                             "-savevtk {{out_path}{file_name}/{file_name}.vtk".format(out_path=case.get_out_folder_path(), file_name=options["vtk_name"]),
                              options["additional_parameters"]]
 
     def on_stdout_ready():

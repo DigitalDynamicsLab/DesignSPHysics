@@ -14,6 +14,8 @@ from mod import file_tools
 from mod.dataobjects.case import Case
 from mod.executable_tools import ensure_process_is_executable_or_fail
 
+from mod.paraview.pv_tools import PvSettingsDialog
+
 from PySide import QtGui, QtCore
 
 class AdvancedPostProcessingDialog(QtGui.QDialog):
@@ -118,8 +120,9 @@ class AdvancedPostProcessingDialog(QtGui.QDialog):
         if self.boundaryvtk_checkbox.isChecked():
             path = os.path.abspath(FreeCAD.getUserAppDataDir() + 'Mod/DesignSPHysics/dualsphysics/bin/' + Case.the().executable_paths.boundaryvtk.split('/')[-1])
             ensure_process_is_executable_or_fail(path)
-            process_argv = ['-loadvtk *_Actual.vtk','-filexml AUTO','-motiondata .','-savevtkdata BoundaryMoving\BoundaryMoving.vtk',
-                           '-onlytype:moving','-savevtkdata Boundary.vtk','-onlytype:fixed']
+            process_argv = ['-loadvtk *_Actual.vtk','-filexml AUTO','-motiondata .',
+                            "-savevtkdata {}\{}.vtk".format(Case.the().pvparam.params["boundarymoving"],Case.the().pvparam.params["boundarymoving"]),
+                            '-onlytype:moving',"-savevtkdata {}.vtk".format(Case.the().pvparam.params["boundaryfixed"]),'-onlytype:fixed']
             process = QtCore.QProcess()
             process.start(path,process_argv)
             process.finished.connect(lambda: self.on_process_finished(case_line,process))
@@ -132,7 +135,7 @@ class AdvancedPostProcessingDialog(QtGui.QDialog):
         if self.isosurface_checkbox.isChecked():
             path = os.path.abspath(FreeCAD.getUserAppDataDir() + 'Mod/DesignSPHysics/dualsphysics/bin/' + Case.the().executable_paths.isosurface.split('/')[-1])
             ensure_process_is_executable_or_fail(path)
-            process_argv = ['-saveiso IsoSurface\Isosurface.vtk']
+            process_argv = ["-saveiso {}\{}.vtk".format(Case.the().pvparam.params["isosurface"],Case.the().pvparam.params["isosurface"])]
             process = QtCore.QProcess()
             process.start(path,process_argv)
             process.finished.connect(lambda: self.on_process_finished(case_line,process))
@@ -145,7 +148,8 @@ class AdvancedPostProcessingDialog(QtGui.QDialog):
         if self.partfluid_checkbox.isChecked():
             path = os.path.abspath(FreeCAD.getUserAppDataDir() + 'Mod/DesignSPHysics/dualsphysics/bin/' + Case.the().executable_paths.partvtk.split('/')[-1])
             ensure_process_is_executable_or_fail(path)
-            process_argv = ['-savevtk PartFluid/PartFluid.vtk', '-onlytype:-moving,-fixed', '-filexml dir/AUTO', '-vars:+idp']
+            process_argv = ["-savevtk {}/{}.vtk".format(Case.the().pvparam.params["partfluid"],Case.the().pvparam.params["partfluid"]), 
+                            '-onlytype:-moving,-fixed', '-filexml dir/AUTO', '-vars:+idp']
             process = QtCore.QProcess()
             process.start(path,process_argv)
             process.finished.connect(lambda: self.on_process_finished(case_line,process))
@@ -158,7 +162,8 @@ class AdvancedPostProcessingDialog(QtGui.QDialog):
         if self.partfixed_checkbox.isChecked():
             path = os.path.abspath(FreeCAD.getUserAppDataDir() + 'Mod/DesignSPHysics/dualsphysics/bin/' + Case.the().executable_paths.partvtk.split('/')[-1])
             ensure_process_is_executable_or_fail(path)
-            process_argv = ['-savevtk PartFixed/PartFixed.vtk', '-onlytype:-moving,-fluid', '-filexml dir/AUTO']
+            process_argv = ["-savevtk {}/{}.vtk".format(Case.the().pvparam.params["partfixed"],Case.the().pvparam.params["partfixed"]),
+                            '-onlytype:-moving,-fluid', '-filexml dir/AUTO']
             process = QtCore.QProcess()
             process.start(path,process_argv)
             process.finished.connect(lambda: self.on_process_finished(case_line,process))
@@ -171,7 +176,8 @@ class AdvancedPostProcessingDialog(QtGui.QDialog):
         if self.partmoving_checkbox.isChecked():
             path = os.path.abspath(FreeCAD.getUserAppDataDir() + 'Mod/DesignSPHysics/dualsphysics/bin/' + Case.the().executable_paths.partvtk.split('/')[-1])
             ensure_process_is_executable_or_fail(path)
-            process_argv = ['-savevtk PartMoving/PartMoving.vtk', '-onlytype:-fixed,-fluid', '-filexml dir/AUTO']
+            process_argv = [["-savevtk {}/{}.vtk".format(Case.the().pvparam.params["partmoving"],Case.the().pvparam.params["partmoving"]),
+                            '-onlytype:-moving,-fluid', '-filexml dir/AUTO'], '-onlytype:-fixed,-fluid', '-filexml dir/AUTO']
             process = QtCore.QProcess()
             process.start(path,process_argv)
             process.finished.connect(lambda: self.on_process_finished(case_line,process))
@@ -184,8 +190,8 @@ class AdvancedPostProcessingDialog(QtGui.QDialog):
         if self.mixingindex_checkbox.isChecked():
             path = os.path.abspath(FreeCAD.getUserAppDataDir() + 'Mod/DesignSPHysics/dualsphysics/bin/MixingTools/MixingIndex.exe')
             ensure_process_is_executable_or_fail(path)
-            dirin1 = Case.the().path + '/' + Case.the().path.split('/')[-1] + '_out/PartFluid'
-            dirin2 = Case.the().path + '/' + Case.the().path.split('/')[-1] + '_out/IsoSurface'
+            dirin1 = Case.the().get_out_folder_path() + "/{}".format(Case.the().pvparam.params["partfluid"])
+            dirin2 = Case.the().get_out_folder_path() + "/{}".format(Case.the().pvparam.params["isosurface"])
             process_argv = [dirin1,dirin2,Case.the().postpro.mixingindex_timestep,Case.the().postpro.mixingindex_x_subdiv,
                 Case.the().postpro.mixingindex_y_subdiv,Case.the().postpro.mixingindex_z_subdiv]
             process = QtCore.QProcess()
@@ -200,7 +206,7 @@ class AdvancedPostProcessingDialog(QtGui.QDialog):
         if self.mixingtorque_checkbox.isChecked():
             path = os.path.abspath(FreeCAD.getUserAppDataDir() + 'Mod/DesignSPHysics/dualsphysics/bin/' + Case.the().executable_paths.computeforces.split('/')[-1])
             ensure_process_is_executable_or_fail(path)
-            process_argv = ['-onlymk:'+Case.the().postpro.computeforce_mk, '-savevtk Forces/Forces.vtk']
+            process_argv = ['-onlymk:'+Case.the().postpro.computeforce_mk, "-savevtk {}/{}.vtk".format(Case.the().pvparam.params["forces"],Case.the().pvparam.params["forces"])]
             process = QtCore.QProcess()
             process.start(path,process_argv)
             process.finished.connect(lambda: self.on_process_finished(case_line,process))
@@ -216,7 +222,7 @@ class AdvancedPostProcessingDialog(QtGui.QDialog):
         if not process.exitCode():
             path = os.path.abspath(FreeCAD.getUserAppDataDir() + 'Mod/DesignSPHysics/dualsphysics/bin/MixingTools/MixingTorque.exe')
             ensure_process_is_executable_or_fail(path)
-            process_argv = [case_line.text()+'/'+case_line.text().split('/')[-1]+'_out/Forces', case_line.text().split("/")[-1], 
+            process_argv = [Case.the().get_out_folder_path() + "/{}".format(Case.the().pvparam.params["forces"]), case_line.text().split("/")[-1], 
                 Case.the().postpro.mixingtorque_x_point, Case.the().postpro.mixingtorque_y_point, Case.the().postpro.mixingtorque_z_point]
             process = QtCore.QProcess()
             process.start(path,process_argv)
@@ -317,13 +323,21 @@ class AdvancedPostProSettings(QtGui.QDialog):
         self.mixingtorque_groupbox = QtGui.QGroupBox("MixingTorque") 
         self.mixingtorque_groupbox.setLayout(layout)        
         
+        
         self.apply_button = QtGui.QPushButton("Apply")
+        self.other_button = QtGui.QPushButton("Others")
         self.apply_button.clicked.connect(self.on_apply_button)
+        self.other_button.clicked.connect(lambda: PvSettingsDialog(self))
+        
+        self.buttons_layout = QtGui.QHBoxLayout()
+        self.buttons_layout.addWidget(self.apply_button)
+        self.buttons_layout.addWidget(self.other_button)
         
         self.main_layout = QtGui.QVBoxLayout()
         self.main_layout.addWidget(self.mixingindex_groupbox)
         self.main_layout.addWidget(self.mixingtorque_groupbox)
-        self.main_layout.addWidget(self.apply_button)
+        self.main_layout.addLayout(self.buttons_layout)
+        self.main_layout.addWidget(QtGui.QLabel("Settings will be saved only for loaded case but used\nin all case added to Advanced post-processing."))
         
         self.setLayout(self.main_layout)
         

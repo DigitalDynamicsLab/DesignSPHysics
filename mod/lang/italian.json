@@ -466,5 +466,11 @@
     "Opens the ParaviewLaunch tool.": "Opens the ParaviewLaunch tool.",
     "DualSPHysics Suite Feature Report": "DualSPHysics Suite Feature Report",
     "Supported": "Supported",
-    "Not supported": "Not supported"
+    "Not supported": "Not supported",
+    "Opens post-processing results in Paraview.": "Opens post-processing results in Paraview.",
+    "FloatingInfo Tool": "FloatingInfo Tool",
+    "MK to process (empty for all)": "MK to process (empty for all)",
+    "Open Paraview": "Open Paraview",
+    "Options": "Options",
+    "Paraview results menu.": "Paraview results menu."
 }

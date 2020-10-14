@@ -13,8 +13,13 @@ from mod.dataobjects.case import Case
 class PartVTKDialog(QtGui.QDialog):
     """ A PartVTK Configuration and Exeuction Dialog. """
 
-    DEFAULT_NAMES = ["PartAll", "PartBound", "PartFluid", "PartFixed", "PartMoving", "PartFloating"]
-
+    DEFAULT_NAMES = [Case.the().pvparam.params["partall"],
+                     Case.the().pvparam.params["partbound"],
+                     Case.the().pvparam.params["partfluid"],
+                     Case.the().pvparam.params["partfixed"],
+                     Case.the().pvparam.params["partmoving"],
+                     Case.the().pvparam.params["partfloating"]]
+                     
     def __init__(self, post_processing_widget, parent=None):
         super().__init__(parent=parent)
 
@@ -105,20 +110,26 @@ class PartVTKDialog(QtGui.QDialog):
         export_parameters = dict()
         export_parameters["save_mode"] = self.outformat_combobox.currentIndex()
         export_parameters["save_types"] = "-all"
-
+    
+        counter = 0
         if self.pvtk_types_chk_all.isChecked():
             export_parameters["save_types"] = "+all"
         else:
             if self.pvtk_types_chk_bound.isChecked():
                 export_parameters["save_types"] += ",+bound"
+                counter += 1
             if self.pvtk_types_chk_fluid.isChecked():
                 export_parameters["save_types"] += ",+fluid"
+                counter += 1
             if self.pvtk_types_chk_fixed.isChecked():
                 export_parameters["save_types"] += ",+fixed"
+                counter += 1
             if self.pvtk_types_chk_moving.isChecked():
                 export_parameters["save_types"] += ",+moving"
+                counter += 1
             if self.pvtk_types_chk_floating.isChecked():
                 export_parameters["save_types"] += ",+floating"
+                counter += 1
 
         if export_parameters["save_types"] == "-all":
             export_parameters["save_types"] = "+all"
@@ -129,6 +140,9 @@ class PartVTKDialog(QtGui.QDialog):
             export_parameters["file_name"] = self.pvtk_file_name_text.text()
         else:
             export_parameters["file_name"] = "ExportedPart"
+        
+        if counter > 1:
+            export_parameters["file_name"] = "Parts_" + export_parameters["file_name"]
 
         if self.pvtk_parameters_text.text():
             export_parameters["additional_parameters"] = self.pvtk_parameters_text.text()

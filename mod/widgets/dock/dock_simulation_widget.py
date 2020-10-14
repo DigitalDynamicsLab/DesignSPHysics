@@ -51,18 +51,7 @@ class DockSimulationWidget(QtGui.QWidget):
         self.execute_button.setIcon(get_icon("run.png"))
         self.execute_button.setIconSize(QtCore.QSize(12, 12))
         self.execute_button.clicked.connect(self.on_ex_simulate)
-
-        # Additional parameters button
-        # self.additional_parameters_button = QtGui.QPushButton(__("Additional parameters"))
-        # self.additional_parameters_button.setToolTip("__(Sets simulation additional parameters for execution.)")
-        # self.additional_parameters_button.clicked.connect(self.on_additional_parameters)
         
-        # Iterate parameters button
-        # self.iterate_button = QtGui.QPushButton(__("Iterate"))
-        # self.iterate_button.setToolTip("__(Iterate simulations varying predefined parameters)")
-        # self.iterate_button.clicked.connect(self.on_ex_iterate_dialog)
-        
-        # Utilities menu
         self.utilities_button = QtGui.QPushButton(__("Utilities"))
         self.utilities_menu = QtGui.QMenu()
         self.utilities_menu.addAction(__("Iterate"))
@@ -74,8 +63,6 @@ class DockSimulationWidget(QtGui.QWidget):
         self.button_layout.addWidget(self.execute_button)
         self.button_layout.addWidget(self.device_selector)
         self.button_layout.addWidget(self.utilities_button)
-        #self.button_layout.addWidget(self.additional_parameters_button)
-        #self.button_layout.addWidget(self.iterate_button)
 
         self.main_layout.addWidget(self.title_label)
         self.main_layout.addLayout(self.button_layout)
