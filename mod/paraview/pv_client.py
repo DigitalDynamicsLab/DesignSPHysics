@@ -4,14 +4,18 @@
 
 import os
 
+import pickle
+
 from socket import *
 
 from paraview.simple import *
  
 class ParaviewState:
     
-    def __init__(self,case):
-
+    def __init__(self,pv_params):
+    
+        case = pv_params["outdir"]
+        
         self.clientMessage = ''
         
         paraview.simple._DisableFirstRenderCameraReset()
@@ -51,7 +55,7 @@ class ParaviewState:
         # ----------------------------------------------------------------
         
         # create new layout object 'Layout #1'
-        layout1 = CreateLayout(name='Layout #1')
+        layout1 = CreateLayout(name=pv_params["name"])
         layout1.SplitHorizontal(0, 0.500000)
         layout1.AssignView(1, renderView1)
         layout1.AssignView(2, lineChartView1)
@@ -65,9 +69,9 @@ class ParaviewState:
         # setup the visualization in view 'renderView1'
         # ----------------------------------------------------------------
         
-        if os.path.isfile(case+'/Boundary.vtk'):
+        if os.path.isfile(case+"/{}.vtk".format(pv_params["boundaryfixed"])):
             # create a new 'Legacy VTK Reader'
-            boundaryvtk = LegacyVTKReader(FileNames=case+'/Boundary.vtk')
+            boundaryvtk = LegacyVTKReader(FileNames=case+"/{}.vtk".format(pv_params["boundaryfixed"]))
             
             if boundaryvtk is not None:
                 #rename source
@@ -98,9 +102,9 @@ class ParaviewState:
         else:
             self.clientMessage += '     Fixed boundary *.vtk-'
             
-        if os.path.isdir(case+'/BoundaryMoving'):
+        if os.path.isdir(case+"/{}".format(pv_params["boundarymoving"])):
             # create a new 'Legacy VTK Reader'
-            boundaryMoving_00 = self.load_vtk(case+'/BoundaryMoving')
+            boundaryMoving_00 = self.load_vtk(case+"/{}".format(pv_params["boundarymoving"]))
             
             if boundaryMoving_00 is not None:
                 #rename source
@@ -130,9 +134,9 @@ class ParaviewState:
         else:
             self.clientMessage += '     Moving boundary *.vtk-'
         
-        if os.path.isdir(case+'/PartFluid'):          
+        if os.path.isdir(case+"/{}".format(pv_params["partfluid"])):          
             # create a new 'Legacy VTK Reader'
-            partFluid_00 = self.load_vtk(case+'/PartFluid')
+            partFluid_00 = self.load_vtk(case+"/{}".format(pv_params["partfluid"]))
             
             if partFluid_00 is not None:
                 #rename source
@@ -188,10 +192,10 @@ class ParaviewState:
         else:
             self.clientMessage += '     Fluid particles *.vtk-'
         
-        if os.path.isdir(case+'/Isosurface'):
+        if os.path.isdir(case+"/{}".format(pv_params["isosurface"])):
             
             # create a new 'Legacy VTK Reader'
-            isosurface_00 = self.load_vtk(case+'/Isosurface')
+            isosurface_00 = self.load_vtk(case+"/{}".format(pv_params["isosurface"]))
             
             if isosurface_00 is not None:
                 # hide data in view
@@ -329,13 +333,11 @@ serverPort = 12000
 clientSocket = socket(AF_INET, SOCK_DGRAM)
 clientSocket.sendto(("Client Ready").encode(), (serverName, serverPort))
 
-# serverCommandDict = {}
-case, serverAddress = clientSocket.recvfrom(2048)
-# while command.decode() != "End of command list-End":
-    # command, serverAddress = clientSocket.recvfrom(2048)
-    # serverCommandDict[command.decode().split('-')[0]] = command.decode().split('-')[1]
-    
-pv_state = ParaviewState(case.decode())
+serverParams, serverAddress = clientSocket.recvfrom(2048)
+
+pv_params = pickle.loads(serverParams)
+
+pv_state = ParaviewState(pv_params)
 clientSocket.sendto(pv_state.clientMessage.encode(), (serverName, serverPort))
 clientSocket.close()
     
