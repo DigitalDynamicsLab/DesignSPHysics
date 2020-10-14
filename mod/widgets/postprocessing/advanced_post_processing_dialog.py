@@ -206,7 +206,9 @@ class AdvancedPostProcessingDialog(QtGui.QDialog):
             process.finished.connect(lambda: self.on_process_finished(case_line,process))
             process.finished.connect(lambda: self.mixingtorque(case_line,process))
         else:
-            self.mixingtorque(case_line)
+            self.case_counter += 1
+            self.on_case_finished(case_line)
+            self.on_run_button()
         
     def mixingtorque(self,case_line,process):
         self.case_counter += 1
