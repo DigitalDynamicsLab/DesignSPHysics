@@ -58,8 +58,7 @@ class Case():
         self.inlet_outlet: InletOutletConfig = InletOutletConfig()
         self.moorings: MooringsConfiguration = MooringsConfiguration()
         self.chrono: ChronoConfig = ChronoConfig()
-        self.postpro: PostPro = PostPro()
-        
+        self.postpro: PostPro = PostPro()        
 
     @staticmethod
     def the() -> "Case":
