@@ -19,6 +19,8 @@ from mod.widgets.postprocessing.isosurface_dialog import IsoSurfaceDialog
 from mod.widgets.postprocessing.flowtool_dialog import FlowToolDialog
 from mod.widgets.postprocessing.advanced_post_processing_dialog import AdvancedPostProcessingDialog
 
+from mod.paraview.pv_tools import open_paraview_client
+
 class DockPostProcessingWidget(QtGui.QWidget):
     """DesignSPHysics Dock Post Processing Widget """
 
@@ -60,7 +62,7 @@ class DockPostProcessingWidget(QtGui.QWidget):
         self.isosurface_button.clicked.connect(lambda: IsoSurfaceDialog(self, parent=get_fc_main_window()))
         self.flowtool_button.clicked.connect(lambda: FlowToolDialog(self, parent=get_fc_main_window()))
         self.advanced_button.clicked.connect(lambda: AdvancedPostProcessingDialog(self, parent=get_fc_main_window()))
-        #self.paraview_button.clicked.connect(lambda: subprocess.Popen([case.executable_paths.paraview, "--state=C:/Users/penzo/AppData/Roaming/FreeCAD/Mod/DesignSPHysics/mod/paraview\/v_state.py"]), stdout=subprocess.PIPE)
+        self.paraview_button.clicked.connect(open_paraview_client)
 
         self.main_layout.addWidget(self.title_label)
         self.first_row_layout.addWidget(self.partvtk_button)
