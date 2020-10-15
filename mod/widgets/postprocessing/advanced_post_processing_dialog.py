@@ -386,8 +386,9 @@ class CaseLine(QtGui.QLineEdit):
         output_message.setMinimumWidth(600)
         output_message_layout = QtGui.QVBoxLayout()
         output_message_text_box = QtGui.QTextEdit()
+        output_message_text_box.setReadOnly(True)
         output_message_layout.addWidget(output_message_text_box)
-        output_message_text_box.append(self.process_output)
+        output_message_text_box.setText(self.process_output)
         output_message.setLayout(output_message_layout)
         output_message.show()
         
