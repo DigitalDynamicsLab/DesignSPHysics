@@ -16,6 +16,8 @@ class RunSummaryDialog(QtGui.QDialog):
     def __init__(self, run_out, parent = None):
         super().__init__(parent = parent)
         
+        self.setWindowTitle("Run summary")
+        
         if os.path.isfile(run_out):
             self.setMinimumHeight(600)
             self.setMinimumWidth(600)

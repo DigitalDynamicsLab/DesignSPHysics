@@ -280,6 +280,8 @@ class AdvancedPostProcessingDialog(QtGui.QDialog):
 class AdvancedPostProSettings(QtGui.QDialog):
     def __init__(self,parent = None):
         super().__init__(parent = parent)
+        
+        self.setWindowTitle("Post-processing settings")
                
         self.mixingindex_timestep = QtGui.QLineEdit(Case.the().postpro.mixingindex_timestep)
         self.mixingindex_x_subdiv = QtGui.QLineEdit(Case.the().postpro.mixingindex_x_subdiv)
@@ -382,6 +384,7 @@ class CaseLine(QtGui.QLineEdit):
     
     def on_output_message(self):
         output_message = QtGui.QDialog(self)
+        output_message.setWindowTitle(self.text().split('/')[-1].replace('_out',''))
         output_message.setMinimumHeight(600)
         output_message.setMinimumWidth(600)
         output_message_layout = QtGui.QVBoxLayout()

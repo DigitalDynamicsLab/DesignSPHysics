@@ -20,6 +20,8 @@ from mod import file_tools
 class PvSettingsDialog(QtGui.QDialog):
     def __init__(self,parent = None):
         super().__init__(parent = parent)
+        
+        self.setWindowTitle("Default export options")
                
         self.boundaryfixed = QtGui.QLineEdit(Case.the().pvparam.params["boundaryfixed"])
         self.boundarymoving = QtGui.QLineEdit(Case.the().pvparam.params["boundarymoving"])
