@@ -23,7 +23,7 @@ class AdvancedPostProcessingDialog(QtGui.QDialog):
     def __init__(self, post_processing_widget, parent=None):
         super().__init__(parent=parent)
         
-        self.setWindowTitle("Post processing iterators")
+        self.setWindowTitle("Advanced post processing")
                     
         self.progress_bar = None
         self.case_counter = 0
