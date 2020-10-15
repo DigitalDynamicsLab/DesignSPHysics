@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 """DesignSPHysics Run Dialog"""
 
+import os
+
 from PySide import QtCore, QtGui
 
 from mod.translation_tools import __
@@ -9,7 +11,28 @@ from mod.constants import LINE_END
 from mod.dialog_tools import warning_dialog
 from mod.gui_tools import h_line_generator
 
-
+class RunSummaryDialog(QtGui.QDialog):
+    
+    def __init__(self, run_out, parent = None):
+        super().__init__(parent = parent)
+        
+        if os.path.isfile(run_out):
+            self.setMinimumHeight(600)
+            self.setMinimumWidth(600)
+            self.layout = QtGui.QVBoxLayout()
+            run_textbox = QtGui.QTextEdit()
+            run_textbox.setReadOnly(True)
+            self.layout.addWidget(run_textbox)
+            file = open(run_out, 'r') 
+            text = ''
+            for line in file: 
+                text += line
+            run_textbox.setText(text)
+            self.setLayout(self.layout)
+            self.show()
+        else:
+            warning_dialog("First run simulation!")
+            
 class RunDialog(QtGui.QDialog):
     """ Defines run window dialog """
 
