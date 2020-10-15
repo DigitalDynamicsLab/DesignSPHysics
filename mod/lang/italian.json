@@ -472,5 +472,7 @@
     "MK to process (empty for all)": "MK to process (empty for all)",
     "Open Paraview": "Open Paraview",
     "Options": "Options",
-    "Paraview results menu.": "Paraview results menu."
+    "Paraview results menu.": "Paraview results menu.",
+    "View run summary ": "View run summary ",
+    "View run summary": "View run summary"
 }
