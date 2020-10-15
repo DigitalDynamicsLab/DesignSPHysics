@@ -16,7 +16,7 @@ from mod.file_tools import save_case
 
 from mod.dataobjects.case import Case
 
-from mod.widgets.run_dialog import RunDialog
+from mod.widgets.run_dialog import RunDialog, RunSummaryDialog
 from mod.widgets.run_additional_parameters_dialog import RunAdditionalParametersDialog
 from mod.widgets.iterate_dialog import IterateDialog
 
@@ -56,6 +56,7 @@ class DockSimulationWidget(QtGui.QWidget):
         self.utilities_menu = QtGui.QMenu()
         self.utilities_menu.addAction(__("Iterate"))
         self.utilities_menu.addAction(__("Additional parameters"))
+        self.utilities_menu.addAction(__("View run summary "))
         self.utilities_menu.triggered.connect(self.on_utilities_menu)
         self.utilities_button.setMenu(self.utilities_menu)
              
@@ -74,6 +75,9 @@ class DockSimulationWidget(QtGui.QWidget):
             self.on_ex_iterate_dialog()
         elif __("Additional parameters") in action.text():
             self.on_additional_parameters()
+        elif __("View run summary") in action.text():
+            RunSummaryDialog(Case.the().get_out_folder_path() + '/run.out',self)
+        
         
     def on_ex_iterate_dialog(self):
         self.iterate_dialog = IterateDialog(parent=self,device_selector = self.device_selector)
