@@ -240,6 +240,18 @@ class ParaviewState:
                 # set color bar visibility
                 tracCntLUTColorBar.Visibility = 1
                 
+                # get color transfer function/color map for 'Eq'
+                eqLUT = GetColorTransferFunction('Eq')
+
+                # Rescale transfer function
+                eqLUT.RescaleTransferFunction(1.1711875016e-07, 0.2697339943)
+
+                # get opacity transfer function/opacity map for 'Eq'
+                eqPWF = GetOpacityTransferFunction('Eq')
+
+                # Rescale transfer function
+                eqPWF.RescaleTransferFunction(1.1711875016e-07, 0.2697339943)
+                
                 # show color legend
                 isosurface_00Display.SetScalarBarVisibility(renderView1, True)
                 
@@ -318,7 +330,15 @@ class ParaviewState:
             mixingIndex_VariancecsvDisplay.SeriesMarkerSize = ['Kramer', '4', 'Lacey', '4', 'Timestep', '4']
         else:
             self.clientMessage += '     Variance mixing index *.csv-'
-            
+        
+        animationScene1 = GetAnimationScene()
+
+        # get the time-keeper
+        timeKeeper1 = GetTimeKeeper()
+
+        # Properties modified on animationScene1
+        animationScene1.PlayMode = 'Snap To TimeSteps'
+
     def load_vtk(self,dirin):   
         vtk_name = dirin.split('/')[-1]
         vtk_files = [f for f in os.listdir(dirin) if os.path.isfile(os.path.join(dirin,f))]
