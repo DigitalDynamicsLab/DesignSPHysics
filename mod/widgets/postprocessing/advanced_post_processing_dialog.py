@@ -51,13 +51,17 @@ class AdvancedPostProcessingDialog(QtGui.QDialog):
         self.mixingindex_checkbox = QtGui.QCheckBox("MixingIndex")
         self.mixingtorque_checkbox = QtGui.QCheckBox("MixingTorque")
 
-        self.partfluid_checkbox.setChecked(True)
-        self.boundaryvtk_checkbox.setChecked(True)
-        self.isosurface_checkbox.setChecked(True)
-        self.mixingindex_checkbox.setChecked(True)        
-        self.mixingtorque_checkbox.setChecked(True)    
-    
-        self.partfluid_checkbox.setDisabled(True)
+        self.partfluid_checkbox.setChecked(Case.the().postpro.partfluid_checked)
+        self.boundaryvtk_checkbox.setChecked(Case.the().postpro.boundaryvtk_checked)
+        self.isosurface_checkbox.setChecked(Case.the().postpro.isosurface_checked)
+        self.mixingindex_checkbox.setChecked(Case.the().postpro.mixingindex_checked)        
+        self.mixingtorque_checkbox.setChecked(Case.the().postpro.mixingtorque_checked)  
+        self.partfixed_checkbox.setChecked(Case.the().postpro.partfixed_checked)
+        self.partmoving_checkbox.setChecked(Case.the().postpro.partmoving_checked)
+        
+        if self.mixingindex_checkbox.isChecked():
+            self.partfluid_checkbox.setDisabled(True)
+            self.isosurface_checkbox.setDisabled(True)
         
         self.mixingindex_checkbox.clicked.connect(self.on_mixingindex_checked)
         
@@ -100,17 +104,20 @@ class AdvancedPostProcessingDialog(QtGui.QDialog):
         self.case_path_lines.append(case_line) 
         self.main_layout.addWidget(case_line)
         case_line.remove.triggered.connect(self.on_remove_case)
-                
+            
         self.show()
     
     def on_mixingindex_checked(self):
         if self.mixingindex_checkbox.isChecked():
             if not self.partfluid_checkbox.isChecked():
                 self.partfluid_checkbox.setChecked(True)
+                self.isosurface_checkbox.setChecked(True)
             self.partfluid_checkbox.setDisabled(True)
+            self.isosurface_checkbox.setDisabled(True)
         else:
-            self.partfluid_checkbox.setEnabled(True)            
-  
+            self.partfluid_checkbox.setEnabled(True)  
+            self.isosurface_checkbox.setEnabled(True)              
+            
     def on_process_finished(self,case_line,process):
         case_line.process_output += bytes(process.readAllStandardOutput().data()).decode()
         self.case_exit_codes.append(process.exitCode())
@@ -233,16 +240,30 @@ class AdvancedPostProcessingDialog(QtGui.QDialog):
             self.on_case_finished(case_line)
             self.on_run_button()
             
-    def on_run_button(self): 
+    def on_run_button(self):
+        
+        if self.case_counter == 0:
+            self.run_button.setDisabled(True)
+            Case.the().postpro.partfluid_checked = self.partfluid_checkbox.isChecked()
+            Case.the().postpro.partfixed_checked = self.partfixed_checkbox.isChecked()
+            Case.the().postpro.partmoving_checked = self.partmoving_checkbox.isChecked()
+            Case.the().postpro.boundaryvtk_checked = self.boundaryvtk_checkbox.isChecked()
+            Case.the().postpro.isosurface_checked = self.isosurface_checkbox.isChecked()
+            Case.the().postpro.mixingindex_checked = self.mixingindex_checkbox.isChecked()
+            Case.the().postpro.mixingtorque_checked = self.mixingtorque_checkbox.isChecked()
+            file_tools.save_case(Case.the().path,Case.the())
+            QtGui.QApplication.processEvents()
         
         if self.case_counter < len(self.case_path_lines):
             case_line = self.case_path_lines[self.case_counter] 
+            case_line.process_output = ''
             if os.path.isfile(case_line.text()+'/casedata.dsphdata'):
                 case_line.removeAction(case_line.remove)                
                 self.cwd = os.getcwd()
                 os.chdir(case_line.text()+'/'+case_line.text().split('/')[-1]+'_out')         
                 self.boundaryvtk(case_line) 
         else:
+            self.run_button.setEnabled(True)
             self.case_counter = 0
     
     def on_case_finished(self,case_line):
