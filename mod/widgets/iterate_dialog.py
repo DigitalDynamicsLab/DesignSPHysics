@@ -48,11 +48,12 @@ class IterateDialog(QtGui.QDialog):
         
         self.constants = ['rhopg','hswl','gamma','speedsystem','coefsound','speedsound',
             'coefh','cflnumber','h','b','massbound','massfluid']
-        self.parameters = ['verletsteps','visco','viscoboundfactor','densitydt_value','shiftcoef','shifttfs','ftpause','coefdtmin','dtini','dtmin',
+        self.parameters = ['dp','verletsteps','visco','viscoboundfactor','densitydt_value','shiftcoef','shifttfs','ftpause','coefdtmin','dtini','dtmin',
             'dtallparticles','timemax','timeout','rhopoutmin','rhopoutmax']
         self.nn_constants = ['rhop','viscop','tau_yield','tau_max','Bi_multi','HBP_m','HBP_n']
 
-        self.param_names = {'rhopg':'RG',
+        self.param_names = {'dp':'DP',
+                            'rhopg':'RG',
                             'hswl':'HL',
                             'gamma':'G',
                             'speedsystem':'MS',
@@ -174,6 +175,9 @@ class IterateDialog(QtGui.QDialog):
                         exec('Case.the().constants.'+self.iteration_params_labels[i]+'= float('+params_combination[i]+')')
                 
                 elif self.iteration_params_labels[i] in self.parameters:
+                    if self.iteration_params_labels[i] == 'dp':
+                        Case.the().dp = params_combination[i]
+                    else:
                         exec('Case.the().execution_parameters.'+self.iteration_params_labels[i]+'= float('+params_combination[i]+')')
                 
                 elif self.iteration_params_labels[i] in self.nn_constants:
