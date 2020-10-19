@@ -16,6 +16,7 @@ class PostPro():
         self.mixingtorque_x_point = '0'
         self.mixingtorque_y_point = '0'
         self.mixingtorque_z_point = '0'
+        self.mixingtorque_tau = '1'
         
         self.partfluid_checked = True
         self.partfixed_checked = False
