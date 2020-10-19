@@ -25,9 +25,10 @@ class ParaviewState:
         lineChartView1.ViewSize = [796, 805]
         lineChartView1.LegendPosition = [621, 729]
         lineChartView1.LeftAxisTitle = '% Mixing Index'
-        lineChartView1.LeftAxisRangeMaximum = 40.0
-        lineChartView1.BottomAxisTitle = 'Timestep'
-        lineChartView1.BottomAxisRangeMaximum = 26.0
+        lineChartView1.LeftAxisRangeMinimum = -2.0
+        lineChartView1.LeftAxisRangeMaximum = 26.0
+        lineChartView1.BottomAxisTitle = 'Time [s]'
+        lineChartView1.BottomAxisRangeMaximum = 5.0
         lineChartView1.RightAxisRangeMaximum = 6.66
         lineChartView1.TopAxisRangeMaximum = 6.66
         
@@ -291,16 +292,16 @@ class ParaviewState:
             mixingIndex_AveragecsvDisplay.CompositeDataSetIndex = [0]
             mixingIndex_AveragecsvDisplay.AttributeType = 'Row Data'
             mixingIndex_AveragecsvDisplay.UseIndexForXAxis = 0
-            mixingIndex_AveragecsvDisplay.XArrayName = 'Timestep'
+            mixingIndex_AveragecsvDisplay.XArrayName = 'Time[s]'
             mixingIndex_AveragecsvDisplay.SeriesVisibility = ['AverageMixingIndex']
-            mixingIndex_AveragecsvDisplay.SeriesLabel = ['AverageMixingIndex', 'AverageMixingIndex', 'Timestep', 'Timestep']
-            mixingIndex_AveragecsvDisplay.SeriesColor = ['AverageMixingIndex', '0', '0.666667', '0', 'Timestep', '0.889998', '0.100008', '0.110002']
-            mixingIndex_AveragecsvDisplay.SeriesPlotCorner = ['AverageMixingIndex', '0', 'Timestep', '0']
+            mixingIndex_AveragecsvDisplay.SeriesLabel = ['Time[s]', 'Time[s]', 'Timestep', 'Timestep', 'AverageMixingIndex', 'AverageMixingIndex']
+            mixingIndex_AveragecsvDisplay.SeriesColor = ['Time[s]', '0', '0.333333', '0.498039', 'Timestep', '0.889998', '0.100008', '0.110002', 'AverageMixingIndex', '0', '0.666667', '0']
+            mixingIndex_AveragecsvDisplay.SeriesPlotCorner = ['AverageMixingIndex', '0', 'Time[s]', '0', 'Timestep', '0']
             mixingIndex_AveragecsvDisplay.SeriesLabelPrefix = ''
-            mixingIndex_AveragecsvDisplay.SeriesLineStyle = ['AverageMixingIndex', '1', 'Timestep', '1']
-            mixingIndex_AveragecsvDisplay.SeriesLineThickness = ['AverageMixingIndex', '2', 'Timestep', '2']
-            mixingIndex_AveragecsvDisplay.SeriesMarkerStyle = ['AverageMixingIndex', '0', 'Timestep', '0']
-            mixingIndex_AveragecsvDisplay.SeriesMarkerSize = ['AverageMixingIndex', '4', 'Timestep', '4']
+            mixingIndex_AveragecsvDisplay.SeriesLineStyle = ['AverageMixingIndex', '1', 'Time[s]', '0', 'Timestep', '1']
+            mixingIndex_AveragecsvDisplay.SeriesLineThickness = ['AverageMixingIndex', '2', 'Time[s]', '0', 'Timestep', '2']
+            mixingIndex_AveragecsvDisplay.SeriesMarkerStyle = ['AverageMixingIndex', '0', 'Time[s]', '0', 'Timestep', '0']
+            mixingIndex_AveragecsvDisplay.SeriesMarkerSize = ['AverageMixingIndex', '4', 'Time[s]', '0', 'Timestep', '4']
         else:
             self.clientMessage += '     Average mixing index *.csv-'
             
@@ -318,16 +319,17 @@ class ParaviewState:
             mixingIndex_VariancecsvDisplay.CompositeDataSetIndex = [0]
             mixingIndex_VariancecsvDisplay.AttributeType = 'Row Data'
             mixingIndex_VariancecsvDisplay.UseIndexForXAxis = 0
-            mixingIndex_VariancecsvDisplay.XArrayName = 'Timestep'
+            mixingIndex_VariancecsvDisplay.XArrayName = 'Time [s]'
             mixingIndex_VariancecsvDisplay.SeriesVisibility = ['Kramer', 'Lacey']
-            mixingIndex_VariancecsvDisplay.SeriesLabel = ['Kramer', 'Kramer', 'Lacey', 'Lacey', 'Timestep', 'Timestep']
-            mixingIndex_VariancecsvDisplay.SeriesColor = ['Kramer', '0', '0', '0', 'Lacey', '0.89', '0.1', '0.11', 'Timestep', '0.22', '0.49', '0.72']
-            mixingIndex_VariancecsvDisplay.SeriesPlotCorner = ['Kramer', '0', 'Lacey', '0', 'Timestep', '0']
+            mixingIndex_VariancecsvDisplay.SeriesLabel = ['Time [s]', 'Time [s]', 'Timestep', 'Timestep', 'Kramer', 'Kramer', 'Lacey', 'Lacey']
+            mixingIndex_VariancecsvDisplay.SeriesColor = ['Time [s]', '0', '0.333333', '1', 'Timestep', '0.220005', '0.489998', '0.719997', 'Kramer', '0', '0', '0', 'Lacey', '0.889998', '0.100008', '0.110002']
+            mixingIndex_VariancecsvDisplay.SeriesPlotCorner = ['Kramer', '0', 'Lacey', '0', 'Time [s]', '0', 'Timestep', '0']
             mixingIndex_VariancecsvDisplay.SeriesLabelPrefix = ''
-            mixingIndex_VariancecsvDisplay.SeriesLineStyle = ['Kramer', '1', 'Lacey', '1', 'Timestep', '1']
-            mixingIndex_VariancecsvDisplay.SeriesLineThickness = ['Kramer', '2', 'Lacey', '2', 'Timestep', '2']
-            mixingIndex_VariancecsvDisplay.SeriesMarkerStyle = ['Kramer', '0', 'Lacey', '0', 'Timestep', '0']
-            mixingIndex_VariancecsvDisplay.SeriesMarkerSize = ['Kramer', '4', 'Lacey', '4', 'Timestep', '4']
+            mixingIndex_VariancecsvDisplay.SeriesLineStyle = ['Kramer', '1', 'Lacey', '1', 'Time [s]', '0', 'Timestep', '1']
+            mixingIndex_VariancecsvDisplay.SeriesLineThickness = ['Kramer', '2', 'Lacey', '2', 'Time [s]', '0', 'Timestep', '2']
+            mixingIndex_VariancecsvDisplay.SeriesMarkerStyle = ['Kramer', '0', 'Lacey', '0', 'Time [s]', '0', 'Timestep', '0']
+            mixingIndex_VariancecsvDisplay.SeriesMarkerSize = ['Kramer', '4', 'Lacey', '4', 'Time [s]', '0', 'Timestep', '4']
+
         else:
             self.clientMessage += '     Variance mixing index *.csv-'
         
@@ -338,7 +340,9 @@ class ParaviewState:
 
         # Properties modified on animationScene1
         animationScene1.PlayMode = 'Snap To TimeSteps'
-
+        
+        SaveState(case + '/' + pv_params["name"] + '_State.pvsm')
+        
     def load_vtk(self,dirin):   
         vtk_name = dirin.split('/')[-1]
         vtk_files = [f for f in os.listdir(dirin) if os.path.isfile(os.path.join(dirin,f))]
@@ -347,7 +351,7 @@ class ParaviewState:
             return LegacyVTKReader(FileNames=vtk_files)
         else:
             return None
-
+    
 serverName = 'localhost'
 serverPort = 12000
 clientSocket = socket(AF_INET, SOCK_DGRAM)
