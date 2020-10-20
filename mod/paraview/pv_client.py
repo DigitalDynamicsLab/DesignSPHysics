@@ -57,7 +57,7 @@ class ParaviewState:
         
         # create new layout object 'Layout #1'
         layout1 = CreateLayout(name=pv_params["name"])
-        layout1.SplitHorizontal(0, 0.500000)
+        layout1.SplitHorizontal(0, 0.7500000)
         layout1.AssignView(1, renderView1)
         layout1.AssignView(2, lineChartView1)
         
@@ -130,6 +130,33 @@ class ParaviewState:
                 boundaryMoving_00Display.OpacityTransferFunction = 'PiecewiseFunction'
                 boundaryMoving_00Display.DataAxesGrid = 'GridAxesRepresentation'
                 boundaryMoving_00Display.PolarAxes = 'PolarAxesRepresentation'
+                
+                # rescale color and/or opacity maps used to exactly fit the current data range
+                boundaryMoving_00Display.RescaleTransferFunctionToDataRange(False, True)
+
+                # get color transfer function/color map for 'ForceMagnitude'
+                forceMagnitudeLUT = GetColorTransferFunction('ForceMagnitude')
+                
+                # Apply a preset using its name. Note this may not work as expected when presets have duplicate names.
+                forceMagnitudeLUT.ApplyPreset('jet', True)
+
+                # Properties modified on forceMagnitudeLUT
+                forceMagnitudeLUT.AutomaticRescaleRangeMode = 'Clamp and update every timestep'
+
+                # get opacity transfer function/opacity map for 'ForceMagnitude'
+                forceMagnitudePWF = GetOpacityTransferFunction('ForceMagnitude')
+                
+                # get color transfer function/color map for 'WearWork'
+                wearWorkLUT = GetColorTransferFunction('WearWork')
+    
+                # Apply a preset using its name. Note this may not work as expected when presets have duplicate names.
+                wearWorkLUT.ApplyPreset('jet', True)
+                
+                # Properties modified on wearWorkLUT
+                wearWorkLUT.AutomaticRescaleRangeMode = 'Clamp and update every timestep'
+
+                # get opacity transfer function/opacity map for 'WearWork'
+                wearWorkPWF = GetOpacityTransferFunction('WearWork')
             else:
                 self.clientMessage += '     Moving boundary *.vtk-'
         else:
@@ -146,28 +173,31 @@ class ParaviewState:
                 #show data from partFluid
                 partFluidDisplay = Show(partFluid_00, renderView1, 'GeometryRepresentation')
                 
-                # get color transfer function/color map for 'Idp'
-                idpLUT = GetColorTransferFunction('Idp')
-                idpLUT.RGBPoints = [11373.0, 0.231373, 0.298039, 0.752941, 16806.5, 0.865003, 0.865003, 0.865003, 22240.0, 0.705882, 0.0156863, 0.14902]
-                idpLUT.ScalarRangeInitialized = 1.0
+                # show color bar/color legend
+                partFluidDisplay.SetScalarBarVisibility(renderView1, False)
+                
+                # get color transfer function/color map for 'GlobId'
+                GlobIdLUT = GetColorTransferFunction('GlobId')
+                GlobIdLUT.RGBPoints = [11373.0, 0.231373, 0.298039, 0.752941, 16806.5, 0.865003, 0.865003, 0.865003, 22240.0, 0.705882, 0.0156863, 0.14902]
+                GlobIdLUT.ScalarRangeInitialized = 1.0
                 
                 # trace defaults for the display properties.
                 partFluidDisplay.Representation = 'Points'
-                partFluidDisplay.ColorArrayName = ['POINTS', 'Idp']
-                partFluidDisplay.LookupTable = idpLUT
+                partFluidDisplay.ColorArrayName = ['POINTS', 'GlobId']
+                partFluidDisplay.LookupTable = GlobIdLUT
                 partFluidDisplay.PointSize = 7.0
                 partFluidDisplay.RenderPointsAsSpheres = 1
-                partFluidDisplay.OSPRayScaleArray = 'Idp'
+                partFluidDisplay.OSPRayScaleArray = 'GlobId'
                 partFluidDisplay.OSPRayScaleFunction = 'PiecewiseFunction'
-                partFluidDisplay.SelectOrientationVectors = 'Idp'
+                partFluidDisplay.SelectOrientationVectors = 'GlobId'
                 partFluidDisplay.ScaleFactor = 0.07399999909102917
-                partFluidDisplay.SelectScaleArray = 'Idp'
+                partFluidDisplay.SelectScaleArray = 'GlobId'
                 partFluidDisplay.GlyphType = 'Arrow'
-                partFluidDisplay.GlyphTableIndexArray = 'Idp'
+                partFluidDisplay.GlyphTableIndexArray = 'GlobId'
                 partFluidDisplay.GaussianRadius = 0.0036999999545514585
-                partFluidDisplay.SetScaleArray = ['POINTS', 'Idp']
+                partFluidDisplay.SetScaleArray = ['POINTS', 'GlobId']
                 partFluidDisplay.ScaleTransferFunction = 'PiecewiseFunction'
-                partFluidDisplay.OpacityArray = ['POINTS', 'Idp']
+                partFluidDisplay.OpacityArray = ['POINTS', 'GlobId']
                 partFluidDisplay.OpacityTransferFunction = 'PiecewiseFunction'
                 partFluidDisplay.DataAxesGrid = 'GridAxesRepresentation'
                 partFluidDisplay.PolarAxes = 'PolarAxesRepresentation'
@@ -180,14 +210,57 @@ class ParaviewState:
                 
                 # setup the color legend parameters for each legend in this view
                 
-                # get color legend/bar for idpLUT in view renderView1
-                idpLUTColorBar = GetScalarBar(idpLUT, renderView1)
-                idpLUTColorBar.WindowLocation = 'UpperRightCorner'
-                idpLUTColorBar.Title = 'Idp'
-                idpLUTColorBar.ComponentTitle = ''
+                # get color legend/bar for GlobIdLUT in view renderView1
+                GlobIdLUTColorBar = GetScalarBar(GlobIdLUT, renderView1)
+                GlobIdLUTColorBar.WindowLocation = 'UpperRightCorner'
+                GlobIdLUTColorBar.Title = 'GlobId'
+                GlobIdLUTColorBar.ComponentTitle = ''
                 
                 # set color bar visibility
-                idpLUTColorBar.Visibility = 0
+                GlobIdLUTColorBar.Visibility = 0
+                
+                # create a new 'Clip'
+                clipPartFluid = Clip(Input=partFluid_00)
+                clipPartFluid.ClipType = 'Plane'
+                clipPartFluid.HyperTreeGridClipper = 'Plane'
+                clipPartFluid.Scalars = ['POINTS', 'GlobId']
+                clipPartFluid.Value = 88465.5
+                
+                #rename source
+                RenameSource('ClipPartFluid',clipPartFluid)
+
+                # init the 'Plane' selected for 'ClipType'
+                clipPartFluid.ClipType.Origin = [0.37765599973499775, 0.012249000370502472, -0.014701500535011292]
+
+                # init the 'Plane' selected for 'HyperTreeGridClipper'
+                clipPartFluid.HyperTreeGridClipper.Origin = [0.37765599973499775, 0.012249000370502472, -0.014701500535011292]
+                
+                #show data from partFluid
+                clipPartFluidDisplay = Show(clipPartFluid, renderView1, 'UnstructuredGridRepresentation')
+                
+                # show color bar/color legend
+                clipPartFluidDisplay.SetScalarBarVisibility(renderView1, False)
+
+                # change representation type
+                clipPartFluidDisplay.SetRepresentationType('Points')
+
+                # set scalar coloring
+                ColorBy(clipPartFluidDisplay, ('POINTS', 'GlobId'))
+
+                # get color transfer function/color map for 'GlobId'
+                globIdLUT = GetColorTransferFunction('GlobId')
+
+                # get opacity transfer function/opacity map for 'GlobId'
+                globIdPWF = GetOpacityTransferFunction('GlobId')
+
+                # Properties modified on clip1Display
+                clipPartFluidDisplay.PointSize = 7.0
+
+                # Properties modified on clip1Display
+                clipPartFluidDisplay.RenderPointsAsSpheres = 1
+                
+                Hide(clipPartFluid, renderView1)
+
             else:
                 self.clientMessage += '     Fluid particles *.vtk-'
         else:
@@ -241,17 +314,17 @@ class ParaviewState:
                 # set color bar visibility
                 tracCntLUTColorBar.Visibility = 1
                 
-                # get color transfer function/color map for 'Eq'
-                eqLUT = GetColorTransferFunction('Eq')
+                # get color transfer function/color map for 'LocMix'
+                locMixLUT = GetColorTransferFunction('LocMix')
 
                 # Rescale transfer function
-                eqLUT.RescaleTransferFunction(1.1711875016e-07, 0.2697339943)
+                locMixLUT.RescaleTransferFunction(0.0, 1.0)
 
-                # get opacity transfer function/opacity map for 'Eq'
-                eqPWF = GetOpacityTransferFunction('Eq')
+                # get opacity transfer function/opacity map for 'LocMix'
+                locMixPWF = GetOpacityTransferFunction('LocMix')
 
                 # Rescale transfer function
-                eqPWF.RescaleTransferFunction(1.1711875016e-07, 0.2697339943)
+                locMixPWF.RescaleTransferFunction(0.0, 1.0)
                 
                 # show color legend
                 isosurface_00Display.SetScalarBarVisibility(renderView1, True)
@@ -263,7 +336,10 @@ class ParaviewState:
                 
                 # get opacity transfer function/opacity map for 'TracCnt'
                 tracCntPWF = GetOpacityTransferFunction('TracCnt')
+                
+                # disable automatic rescaling of data range
                 tracCntPWF.ScalarRangeInitialized = 1
+                locMixPWF.ScalarRangeInitialized = 1
                 
                 # ----------------------------------------------------------------
                 # finally, restore active source
@@ -340,6 +416,11 @@ class ParaviewState:
 
         # Properties modified on animationScene1
         animationScene1.PlayMode = 'Snap To TimeSteps'
+        
+        if (pv_params["time_step"] != 1):
+            animationScene1.PlayMode = 'Sequence'
+            animationScene1.EndTime = int(animationScene1.EndTime / int(pv_params["time_step"]))* int(pv_params["time_step"])
+            animationScene1.NumberOfFrames = int(animationScene1.EndTime / int(pv_params["time_step"])) + 1 
         
         SaveState(case + '/' + pv_params["name"] + '_State.pvsm')
         

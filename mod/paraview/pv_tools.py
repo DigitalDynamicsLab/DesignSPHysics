@@ -102,6 +102,10 @@ def open_paraview_client():
     pv_param["name"] = Case.the().name
     pv_param["path"] = Case.the().path
     pv_param["outdir"] = Case.the().get_out_folder_path()
+    pv_param["time_step"] = Case.the().postpro.mixingindex_timestep
+    pv_param["iso_surf"] = Case.the().postpro.mixingindex_iso_surf
+    pv_param["part_fluid"] = Case.the().postpro.mixingindex_part_fluid
+    pv_param["bound_vtk"] = Case.the().postpro.mixingforces_bound_vtk
     
     clientMessage, clientAddress = serverSocket.recvfrom(2048)
     if clientMessage.decode() == "Client Ready":
