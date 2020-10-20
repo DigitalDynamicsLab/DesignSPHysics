@@ -1,9 +1,6 @@
+#!/usr/bin/env python3.7
 # -*- coding: utf-8 -*-
-"""
-Created on Tue Sep 22 12:19:09 2020
-
-@author: penzo
-"""
+"""DesignSPHysics Advanced Post-processing classes"""
 
 import re
 import os
@@ -22,7 +19,7 @@ from mod.paraview.pv_tools import PvSettingsDialog
 from PySide import QtGui, QtCore
 
 class AdvancedPostProcessingDialog(QtGui.QDialog):
-        
+    
     def __init__(self, post_processing_widget, parent=None):
         super().__init__(parent=parent)
         
@@ -39,15 +36,18 @@ class AdvancedPostProcessingDialog(QtGui.QDialog):
                 
         self.add_case_button = QtGui.QPushButton("Add case")
         self.run_button = QtGui.QPushButton("Run")
+        self.cancel_button = QtGui.QPushButton("Cancel")
         self.settings_button = QtGui.QPushButton("Settings")
         
         self.buttons_layout = QtGui.QHBoxLayout()
         self.buttons_layout.addWidget(self.add_case_button)
         self.buttons_layout.addWidget(self.run_button)
+        self.buttons_layout.addWidget(self.cancel_button)
         self.buttons_layout.addWidget(self.settings_button)
         
         self.add_case_button.clicked.connect(self.on_add_case)
         self.run_button.clicked.connect(self.on_run_button)
+        self.cancel_button.clicked.connect(lambda: CloseDialog(self))
         self.settings_button.clicked.connect(lambda: AdvancedPostProSettings(self))
         
         self.partfluid_checkbox = QtGui.QCheckBox("Fluid")
@@ -56,21 +56,25 @@ class AdvancedPostProcessingDialog(QtGui.QDialog):
         self.boundaryvtk_checkbox = QtGui.QCheckBox("BoundaryVTK")
         self.isosurface_checkbox = QtGui.QCheckBox("Isosurface")
         self.mixingindex_checkbox = QtGui.QCheckBox("MixingIndex")
-        self.mixingtorque_checkbox = QtGui.QCheckBox("MixingTorque")
+        self.mixingforces_checkbox = QtGui.QCheckBox("MixingForces")
 
         self.partfluid_checkbox.setChecked(Case.the().postpro.partfluid_checked)
         self.boundaryvtk_checkbox.setChecked(Case.the().postpro.boundaryvtk_checked)
         self.isosurface_checkbox.setChecked(Case.the().postpro.isosurface_checked)
         self.mixingindex_checkbox.setChecked(Case.the().postpro.mixingindex_checked)        
-        self.mixingtorque_checkbox.setChecked(Case.the().postpro.mixingtorque_checked)  
+        self.mixingforces_checkbox.setChecked(Case.the().postpro.mixingforces_checked)  
         self.partfixed_checkbox.setChecked(Case.the().postpro.partfixed_checked)
         self.partmoving_checkbox.setChecked(Case.the().postpro.partmoving_checked)
         
         if self.mixingindex_checkbox.isChecked():
             self.partfluid_checkbox.setDisabled(True)
             self.isosurface_checkbox.setDisabled(True)
+            
+        if self.mixingforces_checkbox.isChecked():
+            self.boundaryvtk_checkbox.setDisabled(True)
         
         self.mixingindex_checkbox.clicked.connect(self.on_mixingindex_checked)
+        self.mixingforces_checkbox.clicked.connect(self.on_mixingforces_checked)
         
         self.partvtk_groupbox_layout = QtGui.QVBoxLayout()
         self.partvtk_groupbox_layout.addWidget(self.partfluid_checkbox)
@@ -84,7 +88,7 @@ class AdvancedPostProcessingDialog(QtGui.QDialog):
         self.tools_first_column_layout.addWidget(self.boundaryvtk_checkbox)
         self.tools_first_column_layout.addWidget(self.isosurface_checkbox)
         self.tools_first_column_layout.addWidget(self.mixingindex_checkbox)
-        self.tools_first_column_layout.addWidget(self.mixingtorque_checkbox)
+        self.tools_first_column_layout.addWidget(self.mixingforces_checkbox)
               
         self.tools_layout = QtGui.QHBoxLayout()
         self.tools_layout.addLayout(self.tools_first_column_layout)
@@ -138,7 +142,15 @@ class AdvancedPostProcessingDialog(QtGui.QDialog):
             self.isosurface_checkbox.setDisabled(True)
         else:
             self.partfluid_checkbox.setEnabled(True)  
-            self.isosurface_checkbox.setEnabled(True)              
+            self.isosurface_checkbox.setEnabled(True) 
+            
+    def on_mixingforces_checked(self):
+        if self.mixingforces_checkbox.isChecked():
+            if not self.boundaryvtk_checkbox.isChecked():
+                self.boundaryvtk_checkbox.setChecked(True)
+            self.boundaryvtk_checkbox.setDisabled(True)
+        else:
+            self.boundaryvtk_checkbox.setEnabled(True)           
     
     def on_time_update(self):
         self.time_label.setText(str(datetime.timedelta(seconds=int(time.time()-self.start_time))))
@@ -150,7 +162,16 @@ class AdvancedPostProcessingDialog(QtGui.QDialog):
             self.progress_label.setText(new_output.splitlines()[-2][:50])
         else:
             self.progress_label.setText(new_output.splitlines()[-1][:50])
-        
+    
+    def process_init(self,path,argv,name,case_line):
+            process = QtCore.QProcess()
+            self.running_process = process
+            process.start(path,argv)
+            self.process_label.setText(name)
+            process.readyRead.connect(lambda: self.on_data_ready(case_line,process))
+            process.finished.connect(lambda: self.on_process_finished(case_line,process,name))
+            return process
+
     def on_process_finished(self,case_line,process,process_name):
         case_line.process_output += bytes(process.readAllStandardOutput().data()).decode()
         self.progress_label.setText(process_name + "completed.")
@@ -164,12 +185,7 @@ class AdvancedPostProcessingDialog(QtGui.QDialog):
             process_argv = ['-loadvtk *_Actual.vtk','-filexml AUTO','-motiondata .',
                             "-savevtkdata {}\{}.vtk".format(Case.the().pvparam.params["boundarymoving"],Case.the().pvparam.params["boundarymoving"]),
                             '-onlytype:moving',"-savevtkdata {}.vtk".format(Case.the().pvparam.params["boundaryfixed"]),'-onlytype:fixed']
-            process = QtCore.QProcess()
-            self.running_process = process
-            process.start(path,process_argv)
-            self.process_label.setText("BoundaryVTK")
-            process.readyRead.connect(lambda: self.on_data_ready(case_line,process))
-            process.finished.connect(lambda: self.on_process_finished(case_line,process,'BoundaryVTK'))
+            process = self.process_init(path,process_argv,"BoundaryVTK",case_line)
             process.finished.connect(lambda: self.isosurface(case_line))   
         else:
             self.isosurface(case_line)
@@ -180,12 +196,7 @@ class AdvancedPostProcessingDialog(QtGui.QDialog):
             path = os.path.abspath(FreeCAD.getUserAppDataDir() + 'Mod/DesignSPHysics/dualsphysics/bin/' + Case.the().executable_paths.isosurface.split('/')[-1])
             ensure_process_is_executable_or_fail(path)
             process_argv = ["-saveiso {}\{}.vtk".format(Case.the().pvparam.params["isosurface"],Case.the().pvparam.params["isosurface"])]
-            process = QtCore.QProcess()
-            self.running_process = process
-            process.start(path,process_argv)
-            self.process_label.setText("IsoSurface")
-            process.readyRead.connect(lambda: self.on_data_ready(case_line,process))
-            process.finished.connect(lambda: self.on_process_finished(case_line,process,'IsoSurface'))
+            process = self.process_init(path,process_argv,"IsoSurface",case_line)
             process.finished.connect(lambda: self.partfluid(case_line))
         else:
             self.partfluid(case_line)
@@ -197,12 +208,7 @@ class AdvancedPostProcessingDialog(QtGui.QDialog):
             ensure_process_is_executable_or_fail(path)
             process_argv = ["-savevtk {}/{}.vtk".format(Case.the().pvparam.params["partfluid"],Case.the().pvparam.params["partfluid"]), 
                             '-onlytype:-moving,-fixed', '-filexml dir/AUTO', '-vars:+idp']
-            process = QtCore.QProcess()
-            self.running_process = process
-            process.start(path,process_argv)
-            self.process_label.setText("PartFluid")
-            process.readyRead.connect(lambda: self.on_data_ready(case_line,process))
-            process.finished.connect(lambda: self.on_process_finished(case_line,process,'PartFluid'))
+            process = self.process_init(path,process_argv,"PartFluid",case_line)
             process.finished.connect(lambda: self.partfixed(case_line))
         else:
             self.partfixed(case_line)
@@ -214,12 +220,7 @@ class AdvancedPostProcessingDialog(QtGui.QDialog):
             ensure_process_is_executable_or_fail(path)
             process_argv = ["-savevtk {}/{}.vtk".format(Case.the().pvparam.params["partfixed"],Case.the().pvparam.params["partfixed"]),
                             '-onlytype:-moving,-fluid', '-filexml dir/AUTO']
-            process = QtCore.QProcess()
-            self.running_process = process
-            process.start(path,process_argv)
-            self.process_label.setText("PartFixed")
-            process.readyRead.connect(lambda: self.on_data_ready(case_line,process))
-            process.finished.connect(lambda: self.on_process_finished(case_line,process,'PartFixed'))
+            process = self.process_init(path,process_argv,"PartFixed",case_line)
             process.finished.connect(lambda: self.partmoving(case_line))
         else:
             self.partmoving(case_line)
@@ -231,12 +232,7 @@ class AdvancedPostProcessingDialog(QtGui.QDialog):
             ensure_process_is_executable_or_fail(path)
             process_argv = [["-savevtk {}/{}.vtk".format(Case.the().pvparam.params["partmoving"],Case.the().pvparam.params["partmoving"]),
                             '-onlytype:-moving,-fluid', '-filexml dir/AUTO'], '-onlytype:-fixed,-fluid', '-filexml dir/AUTO']
-            process = QtCore.QProcess()
-            self.running_process = process
-            process.start(path,process_argv)
-            self.process_label.setText("PartFixed")
-            process.readyRead.connect(lambda: self.on_data_ready(case_line,process))
-            process.finished.connect(lambda: self.on_process_finished(case_line,process,'PartMoving'))
+            process = self.process_init(path,process_argv,"PartMoving",case_line)
             process.finished.connect(lambda: self.mixingindex(case_line))
         else:
             self.mixingindex(case_line)
@@ -249,50 +245,39 @@ class AdvancedPostProcessingDialog(QtGui.QDialog):
             dirin1 = Case.the().get_out_folder_path() + "/{}".format(Case.the().pvparam.params["partfluid"])
             dirin2 = Case.the().get_out_folder_path() + "/{}".format(Case.the().pvparam.params["isosurface"])
             process_argv = [dirin1,dirin2,Case.the().postpro.mixingindex_timestep,Case.the().postpro.mixingindex_x_subdiv,
-                Case.the().postpro.mixingindex_y_subdiv,Case.the().postpro.mixingindex_z_subdiv,str(Case.the().execution_parameters.timeout)]
-            process = QtCore.QProcess()
-            self.running_process = process
-            process.start(path,process_argv)
-            self.process_label.setText("MixingIndex")
-            process.readyRead.connect(lambda: self.on_data_ready(case_line,process))
-            process.finished.connect(lambda: self.on_process_finished(case_line,process,'MixingIndex'))
+                Case.the().postpro.mixingindex_y_subdiv,Case.the().postpro.mixingindex_z_subdiv,str(Case.the().execution_parameters.timeout),
+                Case.the().postpro.mixingindex_spec_dir,Case.the().postpro.mixingindex_spec_div,Case.the().postpro.mixingindex_iso_surf,
+                Case.the().postpro.mixingindex_part_fluid]
+            process = self.process_init(path,process_argv,"MixingIndex",case_line)
             process.finished.connect(lambda: self.computeforce(case_line))
         else:
             self.computeforce(case_line)
     
     def computeforce(self,case_line): 
         self.case_progress_bar.setValue(70)
-        if self.mixingtorque_checkbox.isChecked():
+        if self.mixingforces_checkbox.isChecked():
             path = os.path.abspath(FreeCAD.getUserAppDataDir() + 'Mod/DesignSPHysics/dualsphysics/bin/' + Case.the().executable_paths.computeforces.split('/')[-1])
             ensure_process_is_executable_or_fail(path)
             process_argv = ['-onlymk:'+Case.the().postpro.computeforce_mk, "-savevtk {}/{}.vtk".format(Case.the().pvparam.params["forces"],Case.the().pvparam.params["forces"])]
-            process = QtCore.QProcess()
-            self.running_process = process
-            process.start(path,process_argv)
-            self.process_label.setText("ComputeForces")
-            process.readyRead.connect(lambda: self.on_data_ready(case_line,process))
-            process.finished.connect(lambda: self.on_process_finished(case_line,process,'ComputeForces'))
-            process.finished.connect(lambda: self.mixingtorque(case_line,process))
+            process = self.process_init(path,process_argv,"ComputeForces",case_line)
+            process.finished.connect(lambda: self.mixingforces(case_line,process))
         else:
             self.case_counter += 1
             self.on_case_finished(case_line)
             self.on_run_button()
         
-    def mixingtorque(self,case_line,process):
+    def mixingforces(self,case_line,process):
         self.case_counter += 1
         self.case_progress_bar.setValue(80)
         if not process.exitCode():
-            path = os.path.abspath(FreeCAD.getUserAppDataDir() + 'Mod/DesignSPHysics/dualsphysics/bin/MixingTools/MixingTorque.exe')
+            path = os.path.abspath(FreeCAD.getUserAppDataDir() + 'Mod/DesignSPHysics/dualsphysics/bin/MixingTools/MixingForces.exe')
             ensure_process_is_executable_or_fail(path)
             process_argv = [Case.the().get_out_folder_path() + "/{}".format(Case.the().pvparam.params["forces"]), case_line.text().split("/")[-1], 
-                Case.the().postpro.mixingtorque_x_point, Case.the().postpro.mixingtorque_y_point, Case.the().postpro.mixingtorque_z_point,
-                Case.the().postpro.mixingtorque_tau, str(Case.the().execution_parameters.timeout)]
-            process = QtCore.QProcess()
-            self.running_process = process
-            process.start(path,process_argv)
-            self.process_label.setText("MixingTorque")
-            process.readyRead.connect(lambda: self.on_data_ready(case_line,process))
-            process.finished.connect(lambda: self.on_process_finished(case_line,process,'MixingTorque'))
+                Case.the().postpro.mixingforces_x_point, Case.the().postpro.mixingforces_y_point, Case.the().postpro.mixingforces_z_point,
+                Case.the().postpro.mixingforces_tau, str(Case.the().execution_parameters.timeout), 
+                Case.the().get_out_folder_path() + "/{}".format(Case.the().pvparam.params["boundarymoving"]),
+                Case.the().postpro.mixingforces_mesh_ref,Case.the().postpro.mixingforces_bound_vtk,Case.the().postpro.mixingforces_torque]
+            process = self.process_init(path,process_argv,"MixingForces",case_line)
             process.finished.connect(lambda: self.on_case_finished(case_line))
             process.finished.connect(self.on_run_button)
         else:
@@ -311,7 +296,7 @@ class AdvancedPostProcessingDialog(QtGui.QDialog):
             Case.the().postpro.boundaryvtk_checked = self.boundaryvtk_checkbox.isChecked()
             Case.the().postpro.isosurface_checked = self.isosurface_checkbox.isChecked()
             Case.the().postpro.mixingindex_checked = self.mixingindex_checkbox.isChecked()
-            Case.the().postpro.mixingtorque_checked = self.mixingtorque_checkbox.isChecked()
+            Case.the().postpro.mixingforces_checked = self.mixingforces_checkbox.isChecked()
             file_tools.save_case(Case.the().path,Case.the())
             QtGui.QApplication.processEvents()
         
@@ -320,7 +305,10 @@ class AdvancedPostProcessingDialog(QtGui.QDialog):
             case_line = self.case_path_lines[self.case_counter] 
             case_line.process_output = ''
             if os.path.isfile(case_line.text()+'/casedata.dsphdata'):
-                case_line.removeAction(case_line.remove)                
+                case_line.removeAction(case_line.remove)     
+                case_line.removeAction(case_line.success)
+                case_line.removeAction(case_line.failed)                
+                
                 self.cwd = os.getcwd()
                 os.chdir(case_line.text()+'/'+case_line.text().split('/')[-1]+'_out')                 
                 self.timer.start(1000)
@@ -352,12 +340,10 @@ class AdvancedPostProcessingDialog(QtGui.QDialog):
             for file_name in selected_files:
                 case_line = CaseLine()
                 case_line.setText(file_name)
-                #case_line.setCursorPosition(0)
                 
                 self.case_path_lines.append(case_line) 
                 self.main_layout.addWidget(case_line)
                 
-                #case_line.remove.triggered.connect()
                 case_line.remove.triggered.connect(self.on_remove_case)
     
     def on_remove_case(self):
@@ -372,10 +358,12 @@ class CloseDialog(QtGui.QDialog):
         
         if parent.case_finished == False:
             self.ok_button = QtGui.QPushButton('Ok')
-            self.cancel_button = QtGui.QPushButton('Cancel')           
+            self.cancel_button = QtGui.QPushButton('Cancel')
             self.ok_button.clicked.connect(lambda: self.on_close_ok_button(parent,event))
+                
             self.cancel_button.clicked.connect(lambda: self.close())
-            self.cancel_button.clicked.connect(lambda: event.ignore())
+            if event is not None:
+                self.cancel_button.clicked.connect(lambda: event.ignore())
             
             self.buttons_layout = QtGui.QHBoxLayout()
             self.buttons_layout.addWidget(self.ok_button)
@@ -395,12 +383,20 @@ class CloseDialog(QtGui.QDialog):
         parent.boundaryvtk_checkbox.setChecked(False)
         parent.isosurface_checkbox.setChecked(False)
         parent.mixingindex_checkbox.setChecked(False)        
-        parent.mixingtorque_checkbox.setChecked(False)  
+        parent.mixingforces_checkbox.setChecked(False)  
         parent.partfixed_checkbox.setChecked(False)
         parent.partmoving_checkbox.setChecked(False)
         parent.case_counter = 1000    
         parent.case_finished = True
         self.close()
+        if event is None:
+            parent.partfluid_checkbox.setChecked(Case.the().postpro.partfluid_checked)
+            parent.boundaryvtk_checkbox.setChecked(Case.the().postpro.boundaryvtk_checked)
+            parent.isosurface_checkbox.setChecked(Case.the().postpro.isosurface_checked)
+            parent.mixingindex_checkbox.setChecked(Case.the().postpro.mixingindex_checked)        
+            parent.mixingforces_checkbox.setChecked(Case.the().postpro.mixingforces_checked)  
+            parent.partfixed_checkbox.setChecked(Case.the().postpro.partfixed_checked)
+            parent.partmoving_checkbox.setChecked(Case.the().postpro.partmoving_checked)
                     
 class AdvancedPostProSettings(QtGui.QDialog):
     def __init__(self,parent = None):
@@ -412,17 +408,46 @@ class AdvancedPostProSettings(QtGui.QDialog):
         self.mixingindex_x_subdiv = QtGui.QLineEdit(Case.the().postpro.mixingindex_x_subdiv)
         self.mixingindex_y_subdiv = QtGui.QLineEdit(Case.the().postpro.mixingindex_y_subdiv)
         self.mixingindex_z_subdiv = QtGui.QLineEdit(Case.the().postpro.mixingindex_z_subdiv)
+       
+        self.mixingindex_spec_dir = QtGui.QComboBox()
+        self.mixingindex_spec_dir.addItem("X")
+        self.mixingindex_spec_dir.addItem("Y")
+        self.mixingindex_spec_dir.addItem("Z")
+        self.mixingindex_spec_dir.setCurrentIndex(int(Case.the().postpro.mixingindex_spec_dir))
+        
+        self.mixingindex_spec_div = QtGui.QComboBox()
+        self.mixingindex_spec_div.addItem("Linear")
+        self.mixingindex_spec_div.addItem("Alternated")
+        self.mixingindex_spec_div.setCurrentIndex(int(Case.the().postpro.mixingindex_spec_div))
+        
+        self.mixingindex_iso_surf = QtGui.QComboBox()
+        self.mixingindex_iso_surf.addItem("Disabled")
+        self.mixingindex_iso_surf.addItem("Enabled")
+        self.mixingindex_iso_surf.setCurrentIndex(int(Case.the().postpro.mixingindex_iso_surf))
+        
+        self.mixingindex_part_fluid = QtGui.QComboBox()
+        self.mixingindex_part_fluid.addItem("Disabled")
+        self.mixingindex_part_fluid.addItem("Enabled")      
+        self.mixingindex_part_fluid.setCurrentIndex(int(Case.the().postpro.mixingindex_part_fluid))
         
         label_layout = QtGui.QVBoxLayout()
         label_layout.addWidget(QtGui.QLabel("Calculation time step:"))
         label_layout.addWidget(QtGui.QLabel("Domain X axis subdivisions:"))
         label_layout.addWidget(QtGui.QLabel("Domain Y axis subdivisions:"))
         label_layout.addWidget(QtGui.QLabel("Domain Z axis subdivisions:"))
+        label_layout.addWidget(QtGui.QLabel("Direction for species subdivision:"))
+        label_layout.addWidget(QtGui.QLabel("Type of species subdivision:"))
+        label_layout.addWidget(QtGui.QLabel(("Update {}:").format(Case.the().pvparam.params["isosurface"])))
+        label_layout.addWidget(QtGui.QLabel(("Update {}:").format(Case.the().pvparam.params["partfluid"])))
         lineedit_layout = QtGui.QVBoxLayout()
         lineedit_layout.addWidget(self.mixingindex_timestep)
         lineedit_layout.addWidget(self.mixingindex_x_subdiv)
         lineedit_layout.addWidget(self.mixingindex_y_subdiv)
         lineedit_layout.addWidget(self.mixingindex_z_subdiv)
+        lineedit_layout.addWidget(self.mixingindex_spec_dir)
+        lineedit_layout.addWidget(self.mixingindex_spec_div)
+        lineedit_layout.addWidget(self.mixingindex_iso_surf)
+        lineedit_layout.addWidget(self.mixingindex_part_fluid)
         layout = QtGui.QHBoxLayout()
         layout.addLayout(label_layout)
         layout.addLayout(lineedit_layout)
@@ -430,12 +455,24 @@ class AdvancedPostProSettings(QtGui.QDialog):
         self.mixingindex_groupbox.setLayout(layout)
                
         self.computeforce_mk = QtGui.QLineEdit(Case.the().postpro.computeforce_mk)         
-        self.mixingtorque_x_point = QtGui.QLineEdit(Case.the().postpro.mixingtorque_x_point)
-        self.mixingtorque_y_point = QtGui.QLineEdit(Case.the().postpro.mixingtorque_y_point)
-        self.mixingtorque_z_point = QtGui.QLineEdit(Case.the().postpro.mixingtorque_z_point)
-        self.mixingtorque_tau = QtGui.QLineEdit(Case.the().postpro.mixingtorque_tau)
-    
-        self.mixingtorque_tau.setToolTip("motor_torque = mixer_torque/tau")
+        self.mixingforces_x_point = QtGui.QLineEdit(Case.the().postpro.mixingforces_x_point)
+        self.mixingforces_y_point = QtGui.QLineEdit(Case.the().postpro.mixingforces_y_point)
+        self.mixingforces_z_point = QtGui.QLineEdit(Case.the().postpro.mixingforces_z_point)
+        self.mixingforces_tau = QtGui.QLineEdit(Case.the().postpro.mixingforces_tau)
+        self.mixingforces_mesh_ref = QtGui.QLineEdit(Case.the().postpro.mixingforces_mesh_ref)
+        
+        self.mixingforces_bound_vtk = QtGui.QComboBox()
+        self.mixingforces_bound_vtk.addItem("Disabled")
+        self.mixingforces_bound_vtk.addItem("Moving")
+        self.mixingforces_bound_vtk.setCurrentIndex(int(Case.the().postpro.mixingforces_bound_vtk))
+        
+        self.mixingforces_torque = QtGui.QComboBox()
+        self.mixingforces_torque.addItem("Disabled")
+        self.mixingforces_torque.addItem("Enabled")     
+        self.mixingforces_torque.setCurrentIndex(int(Case.the().postpro.mixingforces_torque))
+        
+        self.mixingforces_tau.setToolTip("motor_torque = mixer_torque/tau")
+        self.mixingforces_mesh_ref.setToolTip("New mesh will have 4xFactor new triangles")
         
         label_layout = QtGui.QVBoxLayout()
         label_layout.addWidget(QtGui.QLabel("Rotor Mk:"))
@@ -443,17 +480,23 @@ class AdvancedPostProSettings(QtGui.QDialog):
         label_layout.addWidget(QtGui.QLabel("Axis Y point coordinate:"))
         label_layout.addWidget(QtGui.QLabel("Axis Z point coordinate:"))
         label_layout.addWidget(QtGui.QLabel("Reduction ratio:"))
+        label_layout.addWidget(QtGui.QLabel("Mesh refinement factor:"))
+        label_layout.addWidget(QtGui.QLabel("Update BoundaryVTK:"))
+        label_layout.addWidget(QtGui.QLabel("Torque computation:"))        
         lineedit_layout = QtGui.QVBoxLayout()
         lineedit_layout.addWidget(self.computeforce_mk)
-        lineedit_layout.addWidget(self.mixingtorque_x_point)
-        lineedit_layout.addWidget(self.mixingtorque_y_point)
-        lineedit_layout.addWidget(self.mixingtorque_z_point)
-        lineedit_layout.addWidget(self.mixingtorque_tau)
+        lineedit_layout.addWidget(self.mixingforces_x_point)
+        lineedit_layout.addWidget(self.mixingforces_y_point)
+        lineedit_layout.addWidget(self.mixingforces_z_point)
+        lineedit_layout.addWidget(self.mixingforces_tau)
+        lineedit_layout.addWidget(self.mixingforces_mesh_ref)
+        lineedit_layout.addWidget(self.mixingforces_bound_vtk)
+        lineedit_layout.addWidget(self.mixingforces_torque)     
         layout = QtGui.QHBoxLayout()
         layout.addLayout(label_layout)
         layout.addLayout(lineedit_layout)
-        self.mixingtorque_groupbox = QtGui.QGroupBox("MixingTorque") 
-        self.mixingtorque_groupbox.setLayout(layout)        
+        self.mixingforces_groupbox = QtGui.QGroupBox("MixingForces") 
+        self.mixingforces_groupbox.setLayout(layout)        
         
         
         self.apply_button = QtGui.QPushButton("Apply")
@@ -467,7 +510,7 @@ class AdvancedPostProSettings(QtGui.QDialog):
         
         self.main_layout = QtGui.QVBoxLayout()
         self.main_layout.addWidget(self.mixingindex_groupbox)
-        self.main_layout.addWidget(self.mixingtorque_groupbox)
+        self.main_layout.addWidget(self.mixingforces_groupbox)
         self.main_layout.addLayout(self.buttons_layout)
         self.main_layout.addWidget(QtGui.QLabel("Settings will be saved only for loaded case but used\nin all case added to Advanced post-processing."))
         
@@ -480,13 +523,20 @@ class AdvancedPostProSettings(QtGui.QDialog):
         Case.the().postpro.mixingindex_x_subdiv = self.mixingindex_x_subdiv.text()
         Case.the().postpro.mixingindex_y_subdiv = self.mixingindex_y_subdiv.text()
         Case.the().postpro.mixingindex_z_subdiv = self.mixingindex_z_subdiv.text() 
+        Case.the().postpro.mixingindex_spec_dir = str(self.mixingindex_spec_dir.currentIndex())
+        Case.the().postpro.mixingindex_spec_div = str(self.mixingindex_spec_div.currentIndex())
+        Case.the().postpro.mixingindex_iso_surf = str(self.mixingindex_iso_surf.currentIndex())
+        Case.the().postpro.mixingindex_part_fluid = str(self.mixingindex_part_fluid.currentIndex())
         
         Case.the().postpro.computeforce_mk = self.computeforce_mk.text()
         
-        Case.the().postpro.mixingtorque_x_point = self.mixingtorque_x_point.text()
-        Case.the().postpro.mixingtorque_y_point = self.mixingtorque_y_point.text()
-        Case.the().postpro.mixingtorque_z_point = self.mixingtorque_z_point.text()
-        Case.the().postpro.mixingtorque_tau = str(eval(self.mixingtorque_tau.text()))
+        Case.the().postpro.mixingforces_x_point = self.mixingforces_x_point.text()
+        Case.the().postpro.mixingforces_y_point = self.mixingforces_y_point.text()
+        Case.the().postpro.mixingforces_z_point = self.mixingforces_z_point.text()
+        Case.the().postpro.mixingforces_tau = str(eval(self.mixingforces_tau.text()))
+        Case.the().postpro.mixingforces_mesh_ref = self.mixingforces_mesh_ref.text()
+        Case.the().postpro.mixingforces_bound_vtk = str(self.mixingforces_bound_vtk.currentIndex())
+        Case.the().postpro.mixingforces_torque = str(self.mixingforces_torque.currentIndex())
         
         file_tools.save_case(Case.the().path,Case.the())
         
