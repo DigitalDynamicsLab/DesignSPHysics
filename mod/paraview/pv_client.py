@@ -57,9 +57,7 @@ class ParaviewState:
         
         # create new layout object 'Layout #1'
         layout1 = CreateLayout(name=pv_params["name"])
-        layout1.SplitHorizontal(0, 0.7500000)
-        layout1.AssignView(1, renderView1)
-        layout1.AssignView(2, lineChartView1)
+        AssignViewToLayout(view=renderView1, layout=layout1, hint=0)
         
         # ----------------------------------------------------------------
         # restore active view
@@ -281,38 +279,38 @@ class ParaviewState:
                 # show data from isosurface_00
                 isosurface_00Display = Show(isosurface_00, renderView1, 'GeometryRepresentation')
                 
-                # get color transfer function/color map for 'TracCnt'
-                tracCntLUT = GetColorTransferFunction('TracCnt')
-                tracCntLUT.ScalarRangeInitialized = 1.0
+                # get color transfer function/color map for 'GlobId'
+                globidLUT = GetColorTransferFunction('GlobId')
+                globidLUT.ScalarRangeInitialized = 1.0
      
                 # trace defaults for the display properties.
                 isosurface_00Display.Representation = 'Surface'
-                isosurface_00Display.ColorArrayName = ['POINTS', 'TracCnt']
-                isosurface_00Display.LookupTable = tracCntLUT
-                isosurface_00Display.OSPRayScaleArray = 'TracCnt'
+                isosurface_00Display.ColorArrayName = ['POINTS', 'GlobId']
+                isosurface_00Display.LookupTable = globidLUT
+                isosurface_00Display.OSPRayScaleArray = 'GlobId'
                 isosurface_00Display.OSPRayScaleFunction = 'PiecewiseFunction'
                 isosurface_00Display.SelectOrientationVectors = 'None'
                 isosurface_00Display.ScaleFactor = 0.07600256130099298
-                isosurface_00Display.SelectScaleArray = 'TracCnt'
+                isosurface_00Display.SelectScaleArray = 'GlobId'
                 isosurface_00Display.GlyphType = 'Arrow'
-                isosurface_00Display.GlyphTableIndexArray = 'TracCnt'
+                isosurface_00Display.GlyphTableIndexArray = 'GlobId'
                 isosurface_00Display.GaussianRadius = 0.0038001280650496482
-                isosurface_00Display.SetScaleArray = ['POINTS', 'TracCnt']
+                isosurface_00Display.SetScaleArray = ['POINTS', 'GlobId']
                 isosurface_00Display.ScaleTransferFunction = 'PiecewiseFunction'
-                isosurface_00Display.OpacityArray = ['POINTS', 'TracCnt']
+                isosurface_00Display.OpacityArray = ['POINTS', 'GlobId']
                 isosurface_00Display.OpacityTransferFunction = 'PiecewiseFunction'
                 isosurface_00Display.DataAxesGrid = 'GridAxesRepresentation'
                 isosurface_00Display.PolarAxes = 'PolarAxesRepresentation' 
                 
                 # setup the color legend parameters for each legend in this view
                 
-                # get color legend/bar for tracCntLUT in view renderView1
-                tracCntLUTColorBar = GetScalarBar(tracCntLUT, renderView1)
-                tracCntLUTColorBar.Title = 'TracCnt'
-                tracCntLUTColorBar.ComponentTitle = ''
+                # get color legend/bar for globidLUT in view renderView1
+                globidLUTColorBar = GetScalarBar(globidLUT, renderView1)
+                globidLUTColorBar.Title = 'GlobId'
+                globidLUTColorBar.ComponentTitle = ''
                 
                 # set color bar visibility
-                tracCntLUTColorBar.Visibility = 1
+                globidLUTColorBar.Visibility = 1
                 
                 # get color transfer function/color map for 'LocMix'
                 locMixLUT = GetColorTransferFunction('LocMix')
@@ -334,11 +332,11 @@ class ParaviewState:
                 # note: the Get..() functions create a new object, if needed
                 # ----------------------------------------------------------------
                 
-                # get opacity transfer function/opacity map for 'TracCnt'
-                tracCntPWF = GetOpacityTransferFunction('TracCnt')
+                # get opacity transfer function/opacity map for 'globid'
+                globidPWF = GetOpacityTransferFunction('globid')
                 
                 # disable automatic rescaling of data range
-                tracCntPWF.ScalarRangeInitialized = 1
+                globidPWF.ScalarRangeInitialized = 1
                 locMixPWF.ScalarRangeInitialized = 1
                 
                 # ----------------------------------------------------------------
@@ -349,12 +347,18 @@ class ParaviewState:
                 self.clientMessage += '     IsoSurface *.vtk-'
         else:
             self.clientMessage += '     IsoSurface *.vtk-'
-                
+           
+        
+        
         # ----------------------------------------------------------------
         # setup the visualization in view 'lineChartView1'
         # ----------------------------------------------------------------
         
         if os.path.isfile(case+'/PartFluid/MixingIndex_Average.csv'):
+            layout1.SplitHorizontal(0, 0.7500000)
+            layout1.AssignView(1, renderView1)
+            layout1.AssignView(2, lineChartView1)
+            
             # create a new 'CSV Reader'
             mixingIndex_Averagecsv = CSVReader(FileName=case+'/PartFluid/MixingIndex_Average.csv')
             
@@ -445,4 +449,3 @@ pv_params = pickle.loads(serverParams)
 pv_state = ParaviewState(pv_params)
 clientSocket.sendto(pv_state.clientMessage.encode(), (serverName, serverPort))
 clientSocket.close()
-    

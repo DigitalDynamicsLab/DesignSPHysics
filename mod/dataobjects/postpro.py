@@ -6,16 +6,16 @@ class PostPro():
     """ DualSPHysics case postpro definition dataobject. """
 
     def __init__(self):
-        self.mixingindex_timestep = '1'
-        self.mixingindex_type_div = '0'
-        self.mixingindex_1dim_div = '10'
-        self.mixingindex_2dim_div = '1'
-        self.mixingindex_3dim_div = '1'
-        self.mixingindex_axial_dir = '0'
-        self.mixingindex_spec_dir = '0'
-        self.mixingindex_spec_div = '0'        
-        self.mixingindex_iso_surf = '0'
-        self.mixingindex_part_fluid = '0'
+        self.mixingquality_timestep = '1'
+        self.mixingquality_type_div = '0'
+        self.mixingquality_1dim_div = '10'
+        self.mixingquality_2dim_div = '1'
+        self.mixingquality_3dim_div = '1'
+        self.mixingquality_axial_dir = '0'
+        self.mixingquality_spec_dir = '0'
+        self.mixingquality_spec_div = '0'        
+        self.mixingquality_calc_type = '0'
+        self.mixingquality_up_type = '0'
         
         self.computeforce_mk = '11'
         
@@ -34,5 +34,5 @@ class PostPro():
         self.partmoving_checked = False
         self.boundaryvtk_checked = True
         self.isosurface_checked = True
-        self.mixingindex_checked = True
+        self.mixingquality_checked = True
         self.mixingforces_checked = True

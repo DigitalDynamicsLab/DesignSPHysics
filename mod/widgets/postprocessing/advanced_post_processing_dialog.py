@@ -55,25 +55,25 @@ class AdvancedPostProcessingDialog(QtGui.QDialog):
         self.partmoving_checkbox = QtGui.QCheckBox("Moving")
         self.boundaryvtk_checkbox = QtGui.QCheckBox("BoundaryVTK")
         self.isosurface_checkbox = QtGui.QCheckBox("Isosurface")
-        self.mixingindex_checkbox = QtGui.QCheckBox("MixingIndex")
+        self.mixingquality_checkbox = QtGui.QCheckBox("MixingQuality")
         self.mixingforces_checkbox = QtGui.QCheckBox("MixingForces")
 
         self.partfluid_checkbox.setChecked(Case.the().postpro.partfluid_checked)
         self.boundaryvtk_checkbox.setChecked(Case.the().postpro.boundaryvtk_checked)
         self.isosurface_checkbox.setChecked(Case.the().postpro.isosurface_checked)
-        self.mixingindex_checkbox.setChecked(Case.the().postpro.mixingindex_checked)        
+        self.mixingquality_checkbox.setChecked(Case.the().postpro.mixingquality_checked)        
         self.mixingforces_checkbox.setChecked(Case.the().postpro.mixingforces_checked)  
         self.partfixed_checkbox.setChecked(Case.the().postpro.partfixed_checked)
         self.partmoving_checkbox.setChecked(Case.the().postpro.partmoving_checked)
         
-        if self.mixingindex_checkbox.isChecked():
+        if self.mixingquality_checkbox.isChecked():
             self.partfluid_checkbox.setDisabled(True)
             self.isosurface_checkbox.setDisabled(True)
             
         if self.mixingforces_checkbox.isChecked():
             self.boundaryvtk_checkbox.setDisabled(True)
         
-        self.mixingindex_checkbox.clicked.connect(self.on_mixingindex_checked)
+        self.mixingquality_checkbox.clicked.connect(self.on_mixingquality_checked)
         self.mixingforces_checkbox.clicked.connect(self.on_mixingforces_checked)
         
         self.partvtk_groupbox_layout = QtGui.QVBoxLayout()
@@ -87,7 +87,7 @@ class AdvancedPostProcessingDialog(QtGui.QDialog):
         self.tools_first_column_layout = QtGui.QVBoxLayout()
         self.tools_first_column_layout.addWidget(self.boundaryvtk_checkbox)
         self.tools_first_column_layout.addWidget(self.isosurface_checkbox)
-        self.tools_first_column_layout.addWidget(self.mixingindex_checkbox)
+        self.tools_first_column_layout.addWidget(self.mixingquality_checkbox)
         self.tools_first_column_layout.addWidget(self.mixingforces_checkbox)
               
         self.tools_layout = QtGui.QHBoxLayout()
@@ -133,8 +133,8 @@ class AdvancedPostProcessingDialog(QtGui.QDialog):
     def closeEvent(self,event):    
         CloseDialog(self,event)
         
-    def on_mixingindex_checked(self):
-        if self.mixingindex_checkbox.isChecked():
+    def on_mixingquality_checked(self):
+        if self.mixingquality_checkbox.isChecked():
             if not self.partfluid_checkbox.isChecked():
                 self.partfluid_checkbox.setChecked(True)
                 self.isosurface_checkbox.setChecked(True)
@@ -233,22 +233,22 @@ class AdvancedPostProcessingDialog(QtGui.QDialog):
             process_argv = [["-savevtk {}/{}.vtk".format(Case.the().pvparam.params["partmoving"],Case.the().pvparam.params["partmoving"]),
                             '-onlytype:-moving,-fluid', '-filexml dir/AUTO'], '-onlytype:-fixed,-fluid', '-filexml dir/AUTO']
             process = self.process_init(path,process_argv,"PartMoving",case_line)
-            process.finished.connect(lambda: self.mixingindex(case_line))
+            process.finished.connect(lambda: self.mixingquality(case_line))
         else:
-            self.mixingindex(case_line)
+            self.mixingquality(case_line)
         
-    def mixingindex(self,case_line):
+    def mixingquality(self,case_line):
         self.case_progress_bar.setValue(60)
-        if self.mixingindex_checkbox.isChecked():
-            path = os.path.abspath(FreeCAD.getUserAppDataDir() + 'Mod/DesignSPHysics/dualsphysics/bin/MixingTools/MixingIndex.exe')
+        if self.mixingquality_checkbox.isChecked():
+            path = os.path.abspath(FreeCAD.getUserAppDataDir() + 'Mod/DesignSPHysics/dualsphysics/bin/MixingTools/MixingQuality.exe')
             ensure_process_is_executable_or_fail(path)
             dirin1 = Case.the().get_out_folder_path() + "/{}".format(Case.the().pvparam.params["partfluid"])
             dirin2 = Case.the().get_out_folder_path() + "/{}".format(Case.the().pvparam.params["isosurface"])
-            process_argv = [dirin1,dirin2,Case.the().postpro.mixingindex_timestep,Case.the().postpro.mixingindex_1dim_div,
-                Case.the().postpro.mixingindex_2dim_div,Case.the().postpro.mixingindex_3dim_div,str(Case.the().execution_parameters.timeout),
-                Case.the().postpro.mixingindex_spec_dir,Case.the().postpro.mixingindex_spec_div,Case.the().postpro.mixingindex_iso_surf,
-                Case.the().postpro.mixingindex_part_fluid,Case.the().postpro.mixingindex_type_div,Case.the().postpro.mixingindex_axial_dir]
-            process = self.process_init(path,process_argv,"MixingIndex",case_line)
+            process_argv = [Case.the().get_out_folder_path(),Case.the().postpro.mixingquality_spec_dir,
+                Case.the().postpro.mixingquality_calc_type, Case.the().postpro.mixingquality_up_type, 
+                Case.the().postpro.mixingquality_timestep, Case.the().postpro.mixingquality_1dim_div,
+                Case.the().postpro.mixingquality_2dim_div, Case.the().postpro.mixingquality_3dim_div,]
+            process = self.process_init(path,process_argv,"MixingQuality",case_line)
             process.finished.connect(lambda: self.computeforce(case_line))
         else:
             self.computeforce(case_line)
@@ -295,7 +295,7 @@ class AdvancedPostProcessingDialog(QtGui.QDialog):
             Case.the().postpro.partmoving_checked = self.partmoving_checkbox.isChecked()
             Case.the().postpro.boundaryvtk_checked = self.boundaryvtk_checkbox.isChecked()
             Case.the().postpro.isosurface_checked = self.isosurface_checkbox.isChecked()
-            Case.the().postpro.mixingindex_checked = self.mixingindex_checkbox.isChecked()
+            Case.the().postpro.mixingquality_checked = self.mixingquality_checkbox.isChecked()
             Case.the().postpro.mixingforces_checked = self.mixingforces_checkbox.isChecked()
             file_tools.save_case(Case.the().path,Case.the())
             QtGui.QApplication.processEvents()
@@ -382,7 +382,7 @@ class CloseDialog(QtGui.QDialog):
         parent.partfluid_checkbox.setChecked(False)
         parent.boundaryvtk_checkbox.setChecked(False)
         parent.isosurface_checkbox.setChecked(False)
-        parent.mixingindex_checkbox.setChecked(False)        
+        parent.mixingquality_checkbox.setChecked(False)        
         parent.mixingforces_checkbox.setChecked(False)  
         parent.partfixed_checkbox.setChecked(False)
         parent.partmoving_checkbox.setChecked(False)
@@ -393,7 +393,7 @@ class CloseDialog(QtGui.QDialog):
             parent.partfluid_checkbox.setChecked(Case.the().postpro.partfluid_checked)
             parent.boundaryvtk_checkbox.setChecked(Case.the().postpro.boundaryvtk_checked)
             parent.isosurface_checkbox.setChecked(Case.the().postpro.isosurface_checked)
-            parent.mixingindex_checkbox.setChecked(Case.the().postpro.mixingindex_checked)        
+            parent.mixingquality_checkbox.setChecked(Case.the().postpro.mixingquality_checked)        
             parent.mixingforces_checkbox.setChecked(Case.the().postpro.mixingforces_checked)  
             parent.partfixed_checkbox.setChecked(Case.the().postpro.partfixed_checked)
             parent.partmoving_checkbox.setChecked(Case.the().postpro.partmoving_checked)
@@ -404,78 +404,85 @@ class AdvancedPostProSettings(QtGui.QDialog):
         
         self.setWindowTitle("Post-processing settings")
                
-        self.mixingindex_timestep = QtGui.QLineEdit(Case.the().postpro.mixingindex_timestep)
+        self.mixingquality_timestep = QtGui.QLineEdit(Case.the().postpro.mixingquality_timestep)
         
-        self.mixingindex_type_div = QtGui.QComboBox()
-        self.mixingindex_type_div.addItem("Cubes")
-        self.mixingindex_type_div.addItem("Cylindrical")
-        self.mixingindex_type_div.setCurrentIndex(int(Case.the().postpro.mixingindex_type_div))
-        self.mixingindex_type_div.currentIndexChanged.connect(self.on_mixingindex_type_div_changed)
+        self.mixingquality_type_div = QtGui.QComboBox()
+        self.mixingquality_type_div.addItem("Cubes")
+        self.mixingquality_type_div.addItem("Cylindrical")
+        self.mixingquality_type_div.setCurrentIndex(int(Case.the().postpro.mixingquality_type_div))
+        self.mixingquality_type_div.currentIndexChanged.connect(self.on_mixingquality_type_div_changed)
+        self.mixingquality_type_div.setDisabled(True)
         
-        self.mixingindex_1dim_div = QtGui.QLineEdit(Case.the().postpro.mixingindex_1dim_div)
-        self.mixingindex_2dim_div = QtGui.QLineEdit(Case.the().postpro.mixingindex_2dim_div)
-        self.mixingindex_3dim_div = QtGui.QLineEdit(Case.the().postpro.mixingindex_3dim_div)
+        self.mixingquality_1dim_div = QtGui.QLineEdit(Case.the().postpro.mixingquality_1dim_div)
+        self.mixingquality_2dim_div = QtGui.QLineEdit(Case.the().postpro.mixingquality_2dim_div)
+        self.mixingquality_3dim_div = QtGui.QLineEdit(Case.the().postpro.mixingquality_3dim_div)
         
-        self.mixingindex_axial_dir = QtGui.QComboBox()
-        self.mixingindex_axial_dir.addItem("X")
-        self.mixingindex_axial_dir.addItem("Y")
-        self.mixingindex_axial_dir.addItem("Z")
-        self.mixingindex_axial_dir.setCurrentIndex(int(Case.the().postpro.mixingindex_axial_dir)) 
+        self.mixingquality_axial_dir = QtGui.QComboBox()
+        self.mixingquality_axial_dir.addItem("X")
+        self.mixingquality_axial_dir.addItem("Y")
+        self.mixingquality_axial_dir.addItem("Z")
+        self.mixingquality_axial_dir.setCurrentIndex(int(Case.the().postpro.mixingquality_axial_dir)) 
              
-        self.mixingindex_spec_dir = QtGui.QComboBox()
-        self.mixingindex_spec_dir.addItem("")
-        self.mixingindex_spec_dir.addItem("")
-        self.mixingindex_spec_dir.addItem("")
-        self.mixingindex_spec_dir.setCurrentIndex(int(Case.the().postpro.mixingindex_spec_dir))
+        self.mixingquality_spec_dir = QtGui.QComboBox()
+        self.mixingquality_spec_dir.addItem("")
+        self.mixingquality_spec_dir.addItem("")
+        self.mixingquality_spec_dir.addItem("")
+        self.mixingquality_spec_dir.setCurrentIndex(int(Case.the().postpro.mixingquality_spec_dir))
         
-        self.mixingindex_spec_div = QtGui.QComboBox()
-        self.mixingindex_spec_div.addItem("Linear")
-        self.mixingindex_spec_div.addItem("Alternated")
-        self.mixingindex_spec_div.setCurrentIndex(int(Case.the().postpro.mixingindex_spec_div))
+        self.mixingquality_spec_div = QtGui.QComboBox()
+        self.mixingquality_spec_div.addItem("Linear")
+        self.mixingquality_spec_div.addItem("Alternated")
+        self.mixingquality_spec_div.setCurrentIndex(int(Case.the().postpro.mixingquality_spec_div))
+        self.mixingquality_spec_div.setDisabled(True)
         
-        self.mixingindex_iso_surf = QtGui.QComboBox()
-        self.mixingindex_iso_surf.addItem("Disabled")
-        self.mixingindex_iso_surf.addItem("Enabled")
-        self.mixingindex_iso_surf.setCurrentIndex(int(Case.the().postpro.mixingindex_iso_surf))
+        self.mixingquality_up_type = QtGui.QComboBox()
+        self.mixingquality_up_type.addItem("GlobID")
+        self.mixingquality_up_type.addItem("Indices")
+        self.mixingquality_up_type.addItem("Both")
+        self.mixingquality_up_type.addItem("None")
+        self.mixingquality_up_type.setCurrentIndex(int(Case.the().postpro.mixingquality_up_type))
         
-        self.mixingindex_part_fluid = QtGui.QComboBox()
-        self.mixingindex_part_fluid.addItem("Disabled")
-        self.mixingindex_part_fluid.addItem("Enabled")      
-        self.mixingindex_part_fluid.setCurrentIndex(int(Case.the().postpro.mixingindex_part_fluid))
+        self.mixingquality_calc_type = QtGui.QComboBox()
+        self.mixingquality_calc_type.addItem("Average")
+        self.mixingquality_calc_type.addItem("Variance")
+        self.mixingquality_calc_type.addItem("Both")
+        self.mixingquality_calc_type.addItem("None")
+        self.mixingquality_calc_type.setCurrentIndex(int(Case.the().postpro.mixingquality_calc_type))
         
-        self.mixingindex_1dim_label = QtGui.QLabel()
-        self.mixingindex_2dim_label = QtGui.QLabel()
-        self.mixingindex_3dim_label = QtGui.QLabel()
         
-        self.on_mixingindex_type_div_changed()
+        self.mixingquality_1dim_label = QtGui.QLabel()
+        self.mixingquality_2dim_label = QtGui.QLabel()
+        self.mixingquality_3dim_label = QtGui.QLabel()
+        
+        self.on_mixingquality_type_div_changed()
         
         label_layout = QtGui.QVBoxLayout()
         label_layout.addWidget(QtGui.QLabel("Calculation time step:"))
         label_layout.addWidget(QtGui.QLabel("Type of domain subdivision:"))
-        label_layout.addWidget(self.mixingindex_1dim_label)
-        label_layout.addWidget(self.mixingindex_2dim_label)
-        label_layout.addWidget(self.mixingindex_3dim_label)
+        label_layout.addWidget(self.mixingquality_1dim_label)
+        label_layout.addWidget(self.mixingquality_2dim_label)
+        label_layout.addWidget(self.mixingquality_3dim_label)
         label_layout.addWidget(QtGui.QLabel("Domain axial direction:"))
         label_layout.addWidget(QtGui.QLabel("Direction for species subdivision:"))
         label_layout.addWidget(QtGui.QLabel("Type of species subdivision:"))
-        label_layout.addWidget(QtGui.QLabel(("Update {}:").format(Case.the().pvparam.params["isosurface"])))
-        label_layout.addWidget(QtGui.QLabel(("Update {}:").format(Case.the().pvparam.params["partfluid"])))
-        mixingindex_layout = QtGui.QVBoxLayout()
-        mixingindex_layout.addWidget(self.mixingindex_timestep)
-        mixingindex_layout.addWidget(self.mixingindex_type_div)
-        mixingindex_layout.addWidget(self.mixingindex_1dim_div)
-        mixingindex_layout.addWidget(self.mixingindex_2dim_div)
-        mixingindex_layout.addWidget(self.mixingindex_3dim_div)
-        mixingindex_layout.addWidget(self.mixingindex_axial_dir)
-        mixingindex_layout.addWidget(self.mixingindex_spec_dir)
-        mixingindex_layout.addWidget(self.mixingindex_spec_div)
-        mixingindex_layout.addWidget(self.mixingindex_iso_surf)
-        mixingindex_layout.addWidget(self.mixingindex_part_fluid)
+        label_layout.addWidget(QtGui.QLabel("Calculate indices:"))
+        label_layout.addWidget(QtGui.QLabel(("Update results:")))
+        mixingquality_layout = QtGui.QVBoxLayout()
+        mixingquality_layout.addWidget(self.mixingquality_timestep)
+        mixingquality_layout.addWidget(self.mixingquality_type_div)
+        mixingquality_layout.addWidget(self.mixingquality_1dim_div)
+        mixingquality_layout.addWidget(self.mixingquality_2dim_div)
+        mixingquality_layout.addWidget(self.mixingquality_3dim_div)
+        mixingquality_layout.addWidget(self.mixingquality_axial_dir)
+        mixingquality_layout.addWidget(self.mixingquality_spec_dir)
+        mixingquality_layout.addWidget(self.mixingquality_spec_div)
+        mixingquality_layout.addWidget(self.mixingquality_calc_type)
+        mixingquality_layout.addWidget(self.mixingquality_up_type)
         layout = QtGui.QHBoxLayout()
         layout.addLayout(label_layout)
-        layout.addLayout(mixingindex_layout)
-        self.mixingindex_groupbox = QtGui.QGroupBox("MixingIndex") 
-        self.mixingindex_groupbox.setLayout(layout)
+        layout.addLayout(mixingquality_layout)
+        self.mixingquality_groupbox = QtGui.QGroupBox("MixingQuality") 
+        self.mixingquality_groupbox.setLayout(layout)
                
         self.computeforce_mk = QtGui.QLineEdit(Case.the().postpro.computeforce_mk)         
         self.mixingforces_x_point = QtGui.QLineEdit(Case.the().postpro.mixingforces_x_point)
@@ -532,7 +539,7 @@ class AdvancedPostProSettings(QtGui.QDialog):
         self.buttons_layout.addWidget(self.other_button)
         
         self.main_layout = QtGui.QVBoxLayout()
-        self.main_layout.addWidget(self.mixingindex_groupbox)
+        self.main_layout.addWidget(self.mixingquality_groupbox)
         self.main_layout.addWidget(self.mixingforces_groupbox)
         self.main_layout.addLayout(self.buttons_layout)
         self.main_layout.addWidget(QtGui.QLabel("Settings will be saved only for loaded case but used\nin all case added to Advanced post-processing."))
@@ -541,35 +548,35 @@ class AdvancedPostProSettings(QtGui.QDialog):
         
         self.show()
      
-    def on_mixingindex_type_div_changed(self):
-        if self.mixingindex_type_div.currentIndex() == 0:
-            self.mixingindex_1dim_label.setText("Domain X axis subdivisions:")
-            self.mixingindex_2dim_label.setText("Domain Y axis subdivisions:")
-            self.mixingindex_3dim_label.setText("Domain Z axis subdivisions:")
-            self.mixingindex_spec_dir.setItemText(0,"X")
-            self.mixingindex_spec_dir.setItemText(1,"Y")
-            self.mixingindex_spec_dir.setItemText(2,"Z")
-            self.mixingindex_axial_dir.setDisabled(True)
-        elif self.mixingindex_type_div.currentIndex() == 1:
-            self.mixingindex_1dim_label.setText("Domain axial subdivisions:")
-            self.mixingindex_2dim_label.setText("Domain radial subdivisions:")
-            self.mixingindex_3dim_label.setText("Domain angular subdivisions:")
-            self.mixingindex_spec_dir.setItemText(0,"Axial")
-            self.mixingindex_spec_dir.setItemText(1,"Radial")
-            self.mixingindex_spec_dir.setItemText(2,"Angular")
-            self.mixingindex_axial_dir.setEnabled(True)
+    def on_mixingquality_type_div_changed(self):
+        if self.mixingquality_type_div.currentIndex() == 0:
+            self.mixingquality_1dim_label.setText("Domain X axis subdivisions:")
+            self.mixingquality_2dim_label.setText("Domain Y axis subdivisions:")
+            self.mixingquality_3dim_label.setText("Domain Z axis subdivisions:")
+            self.mixingquality_spec_dir.setItemText(0,"X")
+            self.mixingquality_spec_dir.setItemText(1,"Y")
+            self.mixingquality_spec_dir.setItemText(2,"Z")
+            self.mixingquality_axial_dir.setDisabled(True)
+        elif self.mixingquality_type_div.currentIndex() == 1:
+            self.mixingquality_1dim_label.setText("Domain axial subdivisions:")
+            self.mixingquality_2dim_label.setText("Domain radial subdivisions:")
+            self.mixingquality_3dim_label.setText("Domain angular subdivisions:")
+            self.mixingquality_spec_dir.setItemText(0,"Axial")
+            self.mixingquality_spec_dir.setItemText(1,"Radial")
+            self.mixingquality_spec_dir.setItemText(2,"Angular")
+            self.mixingquality_axial_dir.setEnabled(True)
             
     def on_apply_button(self):
-        Case.the().postpro.mixingindex_timestep = self.mixingindex_timestep.text()
-        Case.the().postpro.mixingindex_type_div = str(self.mixingindex_type_div.currentIndex())
-        Case.the().postpro.mixingindex_1dim_div = self.mixingindex_1dim_div.text()
-        Case.the().postpro.mixingindex_2dim_div = self.mixingindex_2dim_div.text()
-        Case.the().postpro.mixingindex_3dim_div = self.mixingindex_3dim_div.text() 
-        Case.the().postpro.mixingindex_axial_dir = str(self.mixingindex_axial_dir.currentIndex())
-        Case.the().postpro.mixingindex_spec_dir = str(self.mixingindex_spec_dir.currentIndex())
-        Case.the().postpro.mixingindex_spec_div = str(self.mixingindex_spec_div.currentIndex())
-        Case.the().postpro.mixingindex_iso_surf = str(self.mixingindex_iso_surf.currentIndex())
-        Case.the().postpro.mixingindex_part_fluid = str(self.mixingindex_part_fluid.currentIndex())
+        Case.the().postpro.mixingquality_timestep = self.mixingquality_timestep.text()
+        Case.the().postpro.mixingquality_type_div = str(self.mixingquality_type_div.currentIndex())
+        Case.the().postpro.mixingquality_1dim_div = self.mixingquality_1dim_div.text()
+        Case.the().postpro.mixingquality_2dim_div = self.mixingquality_2dim_div.text()
+        Case.the().postpro.mixingquality_3dim_div = self.mixingquality_3dim_div.text() 
+        Case.the().postpro.mixingquality_axial_dir = str(self.mixingquality_axial_dir.currentIndex())
+        Case.the().postpro.mixingquality_spec_dir = str(self.mixingquality_spec_dir.currentIndex())
+        Case.the().postpro.mixingquality_spec_div = str(self.mixingquality_spec_div.currentIndex())
+        Case.the().postpro.mixingquality_calc_type = str(self.mixingquality_calc_type.currentIndex())
+        Case.the().postpro.mixingquality_up_type = str(self.mixingquality_up_type.currentIndex())
         
         Case.the().postpro.computeforce_mk = self.computeforce_mk.text()
         
