@@ -17,6 +17,7 @@ class PostPro():
         self.mixingquality_calc_type = '0'
         self.mixingquality_up_type = '0'
         self.mixingquality_coef_dp = '2'
+        self.mixingquality_sub_dir = ''
         
         self.computeforce_mk = '11'
         
