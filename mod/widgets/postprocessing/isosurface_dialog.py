@@ -35,7 +35,7 @@ class IsoSurfaceDialog(QtGui.QDialog):
 
         self.isosfc_file_name_label = QtGui.QLabel(__("File name"))
         self.isosfc_file_name_text = QtGui.QLineEdit()
-        self.isosfc_file_name_text.setText("FileIso")
+        self.isosfc_file_name_text.setText("IsoSurface")
         self.isosfc_filename_layout.addWidget(self.isosfc_file_name_label)
         self.isosfc_filename_layout.addWidget(self.isosfc_file_name_text)
 
