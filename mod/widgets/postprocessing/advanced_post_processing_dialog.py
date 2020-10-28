@@ -244,10 +244,11 @@ class AdvancedPostProcessingDialog(QtGui.QDialog):
             ensure_process_is_executable_or_fail(path)
             dirin1 = Case.the().get_out_folder_path() + "/{}".format(Case.the().pvparam.params["partfluid"])
             dirin2 = Case.the().get_out_folder_path() + "/{}".format(Case.the().pvparam.params["isosurface"])
-            process_argv = [Case.the().get_out_folder_path(),Case.the().postpro.mixingquality_spec_dir,
-                Case.the().postpro.mixingquality_calc_type, Case.the().postpro.mixingquality_up_type, 
+            process_argv = [Case.the().get_out_folder_path(), str(Case.the().dp), Case.the().postpro.mixingquality_coef_dp, 
+                str(Case.the().execution_parameters.timeout), Case.the().postpro.mixingquality_spec_dir,
+                Case.the().postpro.mixingquality_calc_type, Case.the().postpro.mixingquality_up_type, '0', 
                 Case.the().postpro.mixingquality_timestep, Case.the().postpro.mixingquality_1dim_div,
-                Case.the().postpro.mixingquality_2dim_div, Case.the().postpro.mixingquality_3dim_div,]
+                Case.the().postpro.mixingquality_2dim_div, Case.the().postpro.mixingquality_3dim_div,'1','1']
             process = self.process_init(path,process_argv,"MixingQuality",case_line)
             process.finished.connect(lambda: self.computeforce(case_line))
         else:
@@ -416,7 +417,7 @@ class AdvancedPostProSettings(QtGui.QDialog):
         self.mixingquality_1dim_div = QtGui.QLineEdit(Case.the().postpro.mixingquality_1dim_div)
         self.mixingquality_2dim_div = QtGui.QLineEdit(Case.the().postpro.mixingquality_2dim_div)
         self.mixingquality_3dim_div = QtGui.QLineEdit(Case.the().postpro.mixingquality_3dim_div)
-        
+                
         self.mixingquality_axial_dir = QtGui.QComboBox()
         self.mixingquality_axial_dir.addItem("X")
         self.mixingquality_axial_dir.addItem("Y")
@@ -434,26 +435,31 @@ class AdvancedPostProSettings(QtGui.QDialog):
         self.mixingquality_spec_div.addItem("Alternated")
         self.mixingquality_spec_div.setCurrentIndex(int(Case.the().postpro.mixingquality_spec_div))
         self.mixingquality_spec_div.setDisabled(True)
-        
-        self.mixingquality_up_type = QtGui.QComboBox()
-        self.mixingquality_up_type.addItem("GlobID")
-        self.mixingquality_up_type.addItem("Indices")
-        self.mixingquality_up_type.addItem("Both")
-        self.mixingquality_up_type.addItem("None")
-        self.mixingquality_up_type.setCurrentIndex(int(Case.the().postpro.mixingquality_up_type))
-        
+       
         self.mixingquality_calc_type = QtGui.QComboBox()
         self.mixingquality_calc_type.addItem("Average")
         self.mixingquality_calc_type.addItem("Variance")
-        self.mixingquality_calc_type.addItem("Both")
+        self.mixingquality_calc_type.addItem("Coordinate")
+        self.mixingquality_calc_type.addItem("All")
         self.mixingquality_calc_type.addItem("None")
         self.mixingquality_calc_type.setCurrentIndex(int(Case.the().postpro.mixingquality_calc_type))
+        self.mixingquality_calc_type.currentIndexChanged.connect(self.on_mixingquality_up_type_changed)  
         
+        self.mixingquality_up_type = QtGui.QComboBox()
+        self.mixingquality_up_type.addItem("Tracing particles")
+        self.mixingquality_up_type.addItem("Local mixing index")
+        self.mixingquality_up_type.addItem("Coordinate number")
+        self.mixingquality_up_type.addItem("All")
+        self.mixingquality_up_type.addItem("None")
+        self.mixingquality_up_type.setCurrentIndex(int(Case.the().postpro.mixingquality_up_type))
+                
+        self.mixingquality_coef_dp = QtGui.QLineEdit(Case.the().postpro.mixingquality_coef_dp)
         
         self.mixingquality_1dim_label = QtGui.QLabel()
         self.mixingquality_2dim_label = QtGui.QLabel()
         self.mixingquality_3dim_label = QtGui.QLabel()
         
+        self.on_mixingquality_up_type_changed()
         self.on_mixingquality_type_div_changed()
         
         label_layout = QtGui.QVBoxLayout()
@@ -466,7 +472,9 @@ class AdvancedPostProSettings(QtGui.QDialog):
         label_layout.addWidget(QtGui.QLabel("Direction for species subdivision:"))
         label_layout.addWidget(QtGui.QLabel("Type of species subdivision:"))
         label_layout.addWidget(QtGui.QLabel("Calculate indices:"))
-        label_layout.addWidget(QtGui.QLabel(("Update results:")))
+        label_layout.addWidget(QtGui.QLabel("Radius dp coefficient:"))
+        label_layout.addWidget(QtGui.QLabel("Update results:"))
+        
         mixingquality_layout = QtGui.QVBoxLayout()
         mixingquality_layout.addWidget(self.mixingquality_timestep)
         mixingquality_layout.addWidget(self.mixingquality_type_div)
@@ -477,6 +485,7 @@ class AdvancedPostProSettings(QtGui.QDialog):
         mixingquality_layout.addWidget(self.mixingquality_spec_dir)
         mixingquality_layout.addWidget(self.mixingquality_spec_div)
         mixingquality_layout.addWidget(self.mixingquality_calc_type)
+        mixingquality_layout.addWidget(self.mixingquality_coef_dp)
         mixingquality_layout.addWidget(self.mixingquality_up_type)
         layout = QtGui.QHBoxLayout()
         layout.addLayout(label_layout)
@@ -548,7 +557,40 @@ class AdvancedPostProSettings(QtGui.QDialog):
         
         self.show()
      
+    def on_mixingquality_up_type_changed(self):
+        if self.mixingquality_calc_type.currentIndex() == 0: #Average
+            self.mixingquality_up_type.model().item(1).setEnabled(False) #Local mixing index
+            self.mixingquality_up_type.model().item(2).setEnabled(False) #Coordinate number
+            self.mixingquality_up_type.model().item(3).setEnabled(False) #All
+        elif self.mixingquality_calc_type.currentIndex() == 1: #Variance
+            self.mixingquality_up_type.model().item(1).setEnabled(True) #Local mixing index
+            self.mixingquality_up_type.model().item(2).setEnabled(False) #Coordinate number
+            self.mixingquality_up_type.model().item(3).setEnabled(False) #All
+        elif self.mixingquality_calc_type.currentIndex() == 2: #Coordinate
+            self.mixingquality_up_type.model().item(1).setEnabled(False) #Local mixing index
+            self.mixingquality_up_type.model().item(2).setEnabled(True) #Coordinate number
+            self.mixingquality_up_type.model().item(3).setEnabled(False) #All
+        elif self.mixingquality_calc_type.currentIndex() == 3: #All
+            self.mixingquality_up_type.model().item(1).setEnabled(True) #Local mixing index
+            self.mixingquality_up_type.model().item(2).setEnabled(True) #Coordinate number
+            self.mixingquality_up_type.model().item(3).setEnabled(True) #All
+        elif self.mixingquality_calc_type.currentIndex() == 4: #None
+            self.mixingquality_up_type.model().item(1).setEnabled(False) #Local mixing index
+            self.mixingquality_up_type.model().item(2).setEnabled(False) #Coordinate number
+            self.mixingquality_up_type.model().item(3).setEnabled(False) #All
+            
+        if self.mixingquality_calc_type.currentIndex() == 2:
+            self.mixingquality_coef_dp.setEnabled(True)
+        elif self.mixingquality_calc_type.currentIndex() == 3:
+            self.mixingquality_coef_dp.setEnabled(True)
+        else:
+            self.mixingquality_coef_dp.setDisabled(True)
+            
+        if self.mixingquality_up_type.model().item(self.mixingquality_up_type.currentIndex()).isEnabled() == 0:
+            self.mixingquality_up_type.setCurrentIndex(0)
+        
     def on_mixingquality_type_div_changed(self):
+        
         if self.mixingquality_type_div.currentIndex() == 0:
             self.mixingquality_1dim_label.setText("Domain X axis subdivisions:")
             self.mixingquality_2dim_label.setText("Domain Y axis subdivisions:")
@@ -576,6 +618,7 @@ class AdvancedPostProSettings(QtGui.QDialog):
         Case.the().postpro.mixingquality_spec_dir = str(self.mixingquality_spec_dir.currentIndex())
         Case.the().postpro.mixingquality_spec_div = str(self.mixingquality_spec_div.currentIndex())
         Case.the().postpro.mixingquality_calc_type = str(self.mixingquality_calc_type.currentIndex())
+        Case.the().postpro.mixingquality_coef_dp = self.mixingquality_coef_dp.text() 
         Case.the().postpro.mixingquality_up_type = str(self.mixingquality_up_type.currentIndex())
         
         Case.the().postpro.computeforce_mk = self.computeforce_mk.text()
