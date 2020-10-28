@@ -248,7 +248,7 @@ class AdvancedPostProcessingDialog(QtGui.QDialog):
                 str(Case.the().execution_parameters.timeout), Case.the().postpro.mixingquality_spec_dir,
                 Case.the().postpro.mixingquality_calc_type, Case.the().postpro.mixingquality_up_type, '0', 
                 Case.the().postpro.mixingquality_timestep, Case.the().postpro.mixingquality_1dim_div,
-                Case.the().postpro.mixingquality_2dim_div, Case.the().postpro.mixingquality_3dim_div,'1','1']
+                Case.the().postpro.mixingquality_2dim_div, Case.the().postpro.mixingquality_3dim_div,'1','1',Case.the().postpro.mixingquality_sub_dir]
             process = self.process_init(path,process_argv,"MixingQuality",case_line)
             process.finished.connect(lambda: self.computeforce(case_line))
         else:
@@ -455,6 +455,8 @@ class AdvancedPostProSettings(QtGui.QDialog):
                 
         self.mixingquality_coef_dp = QtGui.QLineEdit(Case.the().postpro.mixingquality_coef_dp)
         
+        self.mixingquality_sub_dir = QtGui.QLineEdit(Case.the().postpro.mixingquality_sub_dir)
+        
         self.mixingquality_1dim_label = QtGui.QLabel()
         self.mixingquality_2dim_label = QtGui.QLabel()
         self.mixingquality_3dim_label = QtGui.QLabel()
@@ -474,6 +476,7 @@ class AdvancedPostProSettings(QtGui.QDialog):
         label_layout.addWidget(QtGui.QLabel("Calculate indices:"))
         label_layout.addWidget(QtGui.QLabel("Radius dp coefficient:"))
         label_layout.addWidget(QtGui.QLabel("Update results:"))
+        label_layout.addWidget(QtGui.QLabel("Name for output subdirectory:"))
         
         mixingquality_layout = QtGui.QVBoxLayout()
         mixingquality_layout.addWidget(self.mixingquality_timestep)
@@ -487,6 +490,7 @@ class AdvancedPostProSettings(QtGui.QDialog):
         mixingquality_layout.addWidget(self.mixingquality_calc_type)
         mixingquality_layout.addWidget(self.mixingquality_coef_dp)
         mixingquality_layout.addWidget(self.mixingquality_up_type)
+        mixingquality_layout.addWidget(self.mixingquality_sub_dir)
         layout = QtGui.QHBoxLayout()
         layout.addLayout(label_layout)
         layout.addLayout(mixingquality_layout)
@@ -620,6 +624,7 @@ class AdvancedPostProSettings(QtGui.QDialog):
         Case.the().postpro.mixingquality_calc_type = str(self.mixingquality_calc_type.currentIndex())
         Case.the().postpro.mixingquality_coef_dp = self.mixingquality_coef_dp.text() 
         Case.the().postpro.mixingquality_up_type = str(self.mixingquality_up_type.currentIndex())
+        Case.the().postpro.mixingquality_sub_dir = self.mixingquality_sub_dir.text()
         
         Case.the().postpro.computeforce_mk = self.computeforce_mk.text()
         
