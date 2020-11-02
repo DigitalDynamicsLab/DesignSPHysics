@@ -89,7 +89,7 @@ class PvSettingsDialog(QtGui.QDialog):
         file_tools.save_case(Case.the().path,Case.the())
         
         self.close()
-        
+
 def open_paraview_client():
     subprocess.Popen([Case.the().executable_paths.paraview, "--state=" + os.path.abspath(FreeCAD.getUserAppDataDir() 
         + 'Mod/DesignSPHysics/mod/paraview/pv_client.py')], stdout=subprocess.PIPE)
@@ -101,15 +101,16 @@ def open_paraview_client():
     pv_param = Case.the().pvparam.params
     pv_param["name"] = Case.the().name
     pv_param["path"] = Case.the().path
-    pv_param["outdir"] = Case.the().get_out_folder_path()
+    pv_param["outdir"] = Case.the().get_out_folder_path() + '/' + Case.the().postpro.mixingquality_sub_dir
     pv_param["time_step"] = Case.the().postpro.mixingquality_timestep
+    pv_param["dp"] = str(Case.the().dp)
     pv_param["up_type"] = Case.the().postpro.mixingquality_up_type
     pv_param["bound_vtk"] = Case.the().postpro.mixingforces_bound_vtk
     
     clientMessage, clientAddress = serverSocket.recvfrom(2048)
     if clientMessage.decode() == "Client Ready":
         serverSocket.sendto(pickle.dumps(pv_param), clientAddress)
-    clientMessage, clientAddress = serverSocket.recvfrom(2048)    
+    # clientMessage, clientAddress = serverSocket.recvfrom(2048)    
     serverSocket.close()
-    if clientMessage.decode() != '':
-        info_dialog('Not found:'+'\n'+(clientMessage.decode()).replace('-','\n')+'\n'+'\n'+'Run postprocessing tools or check settings.')
+    #if clientMessage.decode() != '':
+        #info_dialog('Not found:'+'\n'+(clientMessage.decode()).replace('-','\n')+'\n'+'\n'+'Run postprocessing tools or check settings.')
