@@ -5,7 +5,7 @@ import subprocess
 from paraview.simple import *
 from paraview.vtk import vtkIOLegacy
 
-def volumeGen(fluidName,isoName,volumePath,volumeNum,tolerance):
+def volumeGen(fluidName,isoName,gridName,volumePath,volumeNum,tolerance):
     node = r"C:\Users\penzo\Documents\DSPHProject\ConcreteMixer\MixingGen\Node\build\Release\Node.exe"
     tol = str(tolerance)
     nin = fluidName
@@ -34,10 +34,17 @@ def volumeGen(fluidName,isoName,volumePath,volumeNum,tolerance):
     
     vcmd = [vol,vin1,vin2,vin3,vout]
     
-    for cmd in [ncmd,scmd,tcmd,vcmd]:
+    loc = r"C:\Users\penzo\Documents\DSPHProject\ConcreteMixer\MixingGen\LocMix\build\Release\LocMix.exe"
+    lin1 = nin
+    lin2 = gridName
+    lout = vout
+
+    lcmd = [loc,lin1,lin2,lout]
+
+    for cmd in [ncmd,scmd,tcmd,vcmd,lcmd]:
         process = subprocess.call(cmd,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,creationflags=0x08000000)
     
-    return vout
+    return lout
 
 def waitFile(fn):
     
@@ -68,7 +75,9 @@ def volume(parent,tolerance):
     volumeNum = fluidName.split("/")[-1].split("_")[-1].replace(".vtk","")
     volumePath = fluidName.replace(fluidName.split("/")[-1],'')
     volumePath = volumePath.replace(volumePath.split("/")[-2],'')
-    volumePath += "/Volume"
+    
+    gridName = volumePath + "/CfgInit_Grid.vtk"
+    volumePath += "/Volume" 
     
     if not os.path.isdir(volumePath):
         try:
@@ -82,7 +91,7 @@ def volume(parent,tolerance):
                 print ("Creation of the directory %s failed" % volumePath)
             else:
                 print ("Successfully creted the directory %s" % volumePath + "/data")
-                out = volumeGen(fluidName,isoName,volumePath,volumeNum,tolerance)
+                out = volumeGen(fluidName,isoName,gridName,volumePath,volumeNum,tolerance)
     elif not os.path.isdir(volumePath + "/data"):
         try:
             os.mkdir(volumePath + "/data")
@@ -90,9 +99,9 @@ def volume(parent,tolerance):
             print ("Creation of the directory %s failed" % volumePath)
         else:
             print ("Successfully creted the directory %s" % volumePath)
-            out = volumeGen(fluidName,isoName,volumePath,volumeNum,tolerance)
+            out = volumeGen(fluidName,isoName,gridName,volumePath,volumeNum,tolerance)
     else:
-        out = volumeGen(fluidName,isoName,volumePath,volumeNum,tolerance)
+        out = volumeGen(fluidName,isoName,gridName,volumePath,volumeNum,tolerance)
     
     waitFile(out)
             
