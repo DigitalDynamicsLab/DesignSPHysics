@@ -11,30 +11,13 @@ import pickle
 from socket import *
 
 from paraview.simple import *
-        
-class MVolume:
-    
-    def __init__(self):
-        fluid = ProgrammableFilter.GetInputDataObject(0,0)
-        iso = ProgrammableFilter.GetInputDataObject(0,1)
-
-        fluidName=''
-        fluidInfo = fluid.GetFieldData().GetArray("FileInfo")
-        for n in range(0,fluidInfo.GetNumberOfValues()):
-            fluidName+=str(fluidInfo.GetVariantValue(n))
-         
-        isoName=''
-        isoInfo = iso.GetFieldData().GetArray("FileInfo")
-        for n in range(0,isoInfo.GetNumberOfValues()):
-            isoName+=str(isoInfo.GetVariantValue(n))
-
-        print(fluidName)
-        print(isoName)
-                
+                        
 class ParaviewState:
     
     def __init__(self,pv_params):
     
+        renderView = GetActiveViewOrCreate('RenderView')
+        
         case = pv_params["outdir"]
         
         self.clientMessage = ''
@@ -53,20 +36,14 @@ class ParaviewState:
          
         volume_00 = ProgrammableFilter(partFluid_00,isosurface_00)
         volume_00.PythonPath=["'C:/Users/penzo/AppData/Roaming/FreeCAD/Mod/DesignSPHysics/mod/paraview'"]
-        cmd = ["from pv_volume import Volume \n",
-               "#parameters \n",
-               "CleanerTolerance = {} \n".format(pv_params["dp"]),
-               "Volume(self,CleanerTolerance)"]
-        for c in cmd:
-            volume_00.Script += c
-                         
-        volume_00.OutputDataSetType = "vtkUnstructuredGrid"
-        RenameSource('VolumeFilter',volume_00)
-        # animationScene1 = GetAnimationScene()
+        volume_00.OutputDataSetType = "vtkUnstructuredGrid"    
+        volume_00.Script = "from pv_volume import volume\nvolume = volume(self,float(CleanerTolerance[0]))\nself.GetOutput(0).DeepCopy(volume)\n"   
+        volume_00.RequestInformationScript = "self.AddParameter('CleanerTolerance', '{}')\n".format(pv_params["dp"])                                    
+        RenameSource('Volume',volume_00)
+               
+        animationScene1 = GetAnimationScene()
 
-        # timeKeeper1 = GetTimeKeeper()
-
-        # animationScene1.PlayMode = 'Snap To TimeSteps'
+        animationScene1.PlayMode = 'Snap To TimeSteps'
         
         # if (pv_params["time_step"] != 1):
         #     animationScene1.PlayMode = 'Sequence'
