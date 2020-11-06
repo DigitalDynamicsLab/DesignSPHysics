@@ -12,7 +12,7 @@ from socket import *
 
 from paraview.simple import *
                         
-class ParaviewState:
+class MainState:
     
     def __init__(self,pv_params):
     
@@ -35,11 +35,14 @@ class ParaviewState:
         RenameSource('BoundaryMoving',boundaryMoving_00)
          
         volume_00 = ProgrammableFilter(partFluid_00,isosurface_00)
-        volume_00.PythonPath=["'C:/Users/penzo/AppData/Roaming/FreeCAD/Mod/DesignSPHysics/mod/paraview'"]
+        volume_00.PythonPath=["'C:/Users/penzo/AppData/Roaming/FreeCAD/Mod/DesignSPHysics/mod/paraview/macros'"]
         volume_00.OutputDataSetType = "vtkUnstructuredGrid"    
-        volume_00.Script = "from pv_volume import volume\nvolume = volume(self,float(CleanerTolerance[0]))\nself.GetOutput(0).DeepCopy(volume)\n"   
-        volume_00.RequestInformationScript = "self.AddParameter('CleanerTolerance', '{}')\n".format(pv_params["dp"])                                    
+        volume_00.Script = "from pv_volume import volume_gen\nvolume = volume_gen(self,CleanerTolerance[0])\nself.GetOutput(0).DeepCopy(volume)\n"   
+        volume_00.RequestInformationScript = "self.ClearParameters()\nself.AddParameter('CleanerTolerance', '{}')\n".format(pv_params["dp"])                                    
         RenameSource('Volume',volume_00)
+
+        grid = LegacyVTKReader(FileNames=case+"/CfgInit_Grid.vtk")
+        RenameSource('Grid',grid)
                
         animationScene1 = GetAnimationScene()
 
@@ -72,6 +75,6 @@ pv_params = pickle.loads(serverParams)
 
 clientSocket.close()
 
-pv_state = ParaviewState(pv_params)
+pv_state = MainState(pv_params)
 # clientSocket.sendto(pv_state.clientMessage.encode(), (serverName, serverPort))
 
