@@ -7,6 +7,7 @@ class PostPro():
 
     def __init__(self):
         self.mixingquality_timestep = '1'
+        self.mixingquality_first_step = '0'
         self.mixingquality_type_div = '0'
         self.mixingquality_1dim_div = '10'
         self.mixingquality_2dim_div = '1'

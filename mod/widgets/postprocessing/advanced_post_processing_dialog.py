@@ -7,6 +7,7 @@ import os
 import sys
 import time
 import datetime
+import shutil
 
 import FreeCAD
 
@@ -66,15 +67,15 @@ class AdvancedPostProcessingDialog(QtGui.QDialog):
         self.partfixed_checkbox.setChecked(Case.the().postpro.partfixed_checked)
         self.partmoving_checkbox.setChecked(Case.the().postpro.partmoving_checked)
         
-        if self.mixingquality_checkbox.isChecked():
-            self.partfluid_checkbox.setDisabled(True)
-            self.isosurface_checkbox.setDisabled(True)
+        # if self.mixingquality_checkbox.isChecked():
+            # self.partfluid_checkbox.setDisabled(True)
+            # self.isosurface_checkbox.setDisabled(True)
             
-        if self.mixingforces_checkbox.isChecked():
-            self.boundaryvtk_checkbox.setDisabled(True)
+        # if self.mixingforces_checkbox.isChecked():
+            # self.boundaryvtk_checkbox.setDisabled(True)
         
-        self.mixingquality_checkbox.clicked.connect(self.on_mixingquality_checked)
-        self.mixingforces_checkbox.clicked.connect(self.on_mixingforces_checked)
+        # self.mixingquality_checkbox.clicked.connect(self.on_mixingquality_checked)
+        # self.mixingforces_checkbox.clicked.connect(self.on_mixingforces_checked)
         
         self.partvtk_groupbox_layout = QtGui.QVBoxLayout()
         self.partvtk_groupbox_layout.addWidget(self.partfluid_checkbox)
@@ -133,24 +134,24 @@ class AdvancedPostProcessingDialog(QtGui.QDialog):
     def closeEvent(self,event):    
         CloseDialog(self,event)
         
-    def on_mixingquality_checked(self):
-        if self.mixingquality_checkbox.isChecked():
-            if not self.partfluid_checkbox.isChecked():
-                self.partfluid_checkbox.setChecked(True)
-                self.isosurface_checkbox.setChecked(True)
-            self.partfluid_checkbox.setDisabled(True)
-            self.isosurface_checkbox.setDisabled(True)
-        else:
-            self.partfluid_checkbox.setEnabled(True)  
-            self.isosurface_checkbox.setEnabled(True) 
+    # def on_mixingquality_checked(self):
+        # if self.mixingquality_checkbox.isChecked():
+            # if not self.partfluid_checkbox.isChecked():
+                # self.partfluid_checkbox.setChecked(True)
+                # self.isosurface_checkbox.setChecked(True)
+            # self.partfluid_checkbox.setDisabled(True)
+            # self.isosurface_checkbox.setDisabled(True)
+        # else:
+            # self.partfluid_checkbox.setEnabled(True)  
+            # self.isosurface_checkbox.setEnabled(True) 
             
-    def on_mixingforces_checked(self):
-        if self.mixingforces_checkbox.isChecked():
-            if not self.boundaryvtk_checkbox.isChecked():
-                self.boundaryvtk_checkbox.setChecked(True)
-            self.boundaryvtk_checkbox.setDisabled(True)
-        else:
-            self.boundaryvtk_checkbox.setEnabled(True)           
+    # def on_mixingforces_checked(self):
+        # if self.mixingforces_checkbox.isChecked():
+            # if not self.boundaryvtk_checkbox.isChecked():
+                # self.boundaryvtk_checkbox.setChecked(True)
+            # self.boundaryvtk_checkbox.setDisabled(True)
+        # else:
+            # self.boundaryvtk_checkbox.setEnabled(True)           
     
     def on_time_update(self):
         self.time_label.setText(str(datetime.timedelta(seconds=int(time.time()-self.start_time))))
@@ -247,7 +248,7 @@ class AdvancedPostProcessingDialog(QtGui.QDialog):
             process_argv = [Case.the().get_out_folder_path(), str(Case.the().dp), Case.the().postpro.mixingquality_coef_dp, 
                 str(Case.the().execution_parameters.timeout), Case.the().postpro.mixingquality_spec_dir,
                 Case.the().postpro.mixingquality_calc_type, Case.the().postpro.mixingquality_up_type, '0', 
-                Case.the().postpro.mixingquality_timestep, Case.the().postpro.mixingquality_1dim_div,
+                Case.the().postpro.mixingquality_timestep, Case.the().postpro.mixingquality_first_step, Case.the().postpro.mixingquality_1dim_div,
                 Case.the().postpro.mixingquality_2dim_div, Case.the().postpro.mixingquality_3dim_div,'1','1',Case.the().postpro.mixingquality_sub_dir]
             process = self.process_init(path,process_argv,"MixingQuality",case_line)
             process.finished.connect(lambda: self.computeforce(case_line))
@@ -300,6 +301,8 @@ class AdvancedPostProcessingDialog(QtGui.QDialog):
             Case.the().postpro.mixingforces_checked = self.mixingforces_checkbox.isChecked()
             file_tools.save_case(Case.the().path,Case.the())
             QtGui.QApplication.processEvents()
+            
+            if os.path.isdir(Case.the().get_out_folder_path() + "/Volume"):shutil.rmtree(Case.the().get_out_folder_path() + "/Volume")
         
         if self.case_counter < len(self.case_path_lines):
             self.case_finished = False
@@ -331,6 +334,7 @@ class AdvancedPostProcessingDialog(QtGui.QDialog):
             case_line.addAction(case_line.failed,QtGui.QLineEdit().TrailingPosition)                       
         else:
             case_line.addAction(case_line.success,QtGui.QLineEdit().TrailingPosition)
+        self.case_exit_codes = []
         
     def on_add_case(self):   
         
@@ -406,6 +410,7 @@ class AdvancedPostProSettings(QtGui.QDialog):
         self.setWindowTitle("Post-processing settings")
                
         self.mixingquality_timestep = QtGui.QLineEdit(Case.the().postpro.mixingquality_timestep)
+        self.mixingquality_first_step = QtGui.QLineEdit(Case.the().postpro.mixingquality_first_step)
         
         self.mixingquality_type_div = QtGui.QComboBox()
         self.mixingquality_type_div.addItem("Cubes")
@@ -466,6 +471,7 @@ class AdvancedPostProSettings(QtGui.QDialog):
         
         label_layout = QtGui.QVBoxLayout()
         label_layout.addWidget(QtGui.QLabel("Calculation time step:"))
+        label_layout.addWidget(QtGui.QLabel("Calculation start from step:"))
         label_layout.addWidget(QtGui.QLabel("Type of domain subdivision:"))
         label_layout.addWidget(self.mixingquality_1dim_label)
         label_layout.addWidget(self.mixingquality_2dim_label)
@@ -480,6 +486,7 @@ class AdvancedPostProSettings(QtGui.QDialog):
         
         mixingquality_layout = QtGui.QVBoxLayout()
         mixingquality_layout.addWidget(self.mixingquality_timestep)
+        mixingquality_layout.addWidget(self.mixingquality_first_step)
         mixingquality_layout.addWidget(self.mixingquality_type_div)
         mixingquality_layout.addWidget(self.mixingquality_1dim_div)
         mixingquality_layout.addWidget(self.mixingquality_2dim_div)
@@ -614,6 +621,7 @@ class AdvancedPostProSettings(QtGui.QDialog):
             
     def on_apply_button(self):
         Case.the().postpro.mixingquality_timestep = self.mixingquality_timestep.text()
+        Case.the().postpro.mixingquality_first_step = self.mixingquality_first_step.text()
         Case.the().postpro.mixingquality_type_div = str(self.mixingquality_type_div.currentIndex())
         Case.the().postpro.mixingquality_1dim_div = self.mixingquality_1dim_div.text()
         Case.the().postpro.mixingquality_2dim_div = self.mixingquality_2dim_div.text()
