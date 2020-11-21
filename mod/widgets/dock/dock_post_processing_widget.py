@@ -17,10 +17,10 @@ from mod.widgets.postprocessing.floatinginfo_dialog import FloatingInfoDialog
 from mod.widgets.postprocessing.measuretool_dialog import MeasureToolDialog
 from mod.widgets.postprocessing.isosurface_dialog import IsoSurfaceDialog
 from mod.widgets.postprocessing.flowtool_dialog import FlowToolDialog
-from mod.widgets.postprocessing.advanced_post_processing_dialog import AdvancedPostProcessingDialog
-from mod.paraview.pv_tools import PvSettingsDialog
 
-from mod.paraview.pv_tools import open_paraview_client
+from mod.custom.advanced_post_processing_dialog import AdvancedPostProcessingDialog
+from mod.custom.paraview.pv_tools import PvSettingsDialog
+from mod.custom.paraview.pv_tools import open_paraview_client
 
 class DockPostProcessingWidget(QtGui.QWidget):
     """DesignSPHysics Dock Post Processing Widget """

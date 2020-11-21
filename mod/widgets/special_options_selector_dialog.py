@@ -23,7 +23,6 @@ from mod.widgets.damping_config_dialog import DampingConfigDialog
 from mod.widgets.inlet_config_dialog import InletConfigDialog
 from mod.widgets.chrono.chrono_config_dialog import ChronoConfigDialog
 from mod.widgets.moorings.moorings_configuration_dialog import MooringsConfigurationDialog
-from mod.widgets.nn_parameters_dialog import NNParametersDialog
 
 from mod.dataobjects.case import Case
 from mod.dataobjects.application_settings import ApplicationSettings
@@ -34,7 +33,9 @@ from mod.dataobjects.relaxation_zone_regular import RelaxationZoneRegular
 from mod.dataobjects.relaxation_zone_irregular import RelaxationZoneIrregular
 from mod.dataobjects.relaxation_zone_file import RelaxationZoneFile
 from mod.dataobjects.relaxation_zone_uniform import RelaxationZoneUniform
-from mod.dataobjects.nn_parameters_wizard import NNParametersWizard
+
+from mod.custom.nn_parameters_dialog import NNParametersDialog
+from mod.custom.nn_parameters_wizard import NNParametersWizard
 
 class SpecialOptionsSelectorDialog(QtGui.QDialog):
     """ A dialog with different buttons to access special DesignSPHysics options for a case. """

@@ -23,7 +23,8 @@ from mod.freecad_tools import get_fc_main_window, save_current_freecad_document,
 from mod.constants import VERSION
 
 from mod.dataobjects.case import Case
-from mod.dataobjects.nn_parameters_wizard import NNParametersWizard
+
+from mod.custom.nn_parameters_wizard import NNParametersWizard
 
 from mod.widgets.gencase_completed_dialog import GencaseCompletedDialog
 from mod.widgets.run_dialog import RunDialog

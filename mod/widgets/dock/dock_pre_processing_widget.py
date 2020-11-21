@@ -27,7 +27,8 @@ from mod.widgets.case_summary import CaseSummary
 
 from mod.dataobjects.case import Case
 from mod.dataobjects.simulation_object import SimulationObject
-from mod.dataobjects.nn_parameters_wizard import NNParametersWizard
+
+from mod.custom.nn_parameters_wizard import NNParametersWizard
 
 class DockPreProcessingWidget(QtGui.QWidget):
     """DesignSPHysics Dock Pre Processing Widget """

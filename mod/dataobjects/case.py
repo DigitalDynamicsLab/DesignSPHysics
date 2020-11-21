@@ -9,7 +9,6 @@ from mod.stdout_tools import debug
 from mod.constants import VERSION, SUPPORTED_TYPES, MKFLUID_LIMIT
 from mod.enums import ObjectType
 
-from mod.dataobjects.postpro import PostPro
 from mod.dataobjects.inletoutlet.inlet_outlet_config import InletOutletConfig
 from mod.dataobjects.chrono.chrono_config import ChronoConfig
 from mod.dataobjects.constants import Constants
@@ -25,7 +24,8 @@ from mod.dataobjects.mk_based_properties import MKBasedProperties
 from mod.dataobjects.damping import Damping
 from mod.dataobjects.moorings.moorings_configuration import MooringsConfiguration
 
-from mod.paraview.pv_param import PvParam
+from mod.custom.postpro import PostPro
+from mod.custom.paraview.pv_param import PvParam
 
 class Case():
     """ Main data structure for the data inside a case properties, objects

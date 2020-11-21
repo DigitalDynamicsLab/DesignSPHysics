@@ -18,7 +18,8 @@ from mod.dataobjects.case import Case
 
 from mod.widgets.run_dialog import RunDialog, RunSummaryDialog
 from mod.widgets.run_additional_parameters_dialog import RunAdditionalParametersDialog
-from mod.widgets.iterate_dialog import IterateDialog
+
+from mod.custom.iterate_dialog import IterateDialog
 
 class DockSimulationWidget(QtGui.QWidget):
     """DesignSPHysics Dock Execution Widget """
