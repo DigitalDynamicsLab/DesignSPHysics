@@ -68,7 +68,7 @@ class PartVTKDialog(QtGui.QDialog):
         self.pvtk_filename_layout.addWidget(self.pvtk_file_name_text)
 
         self.pvtk_parameters_label = QtGui.QLabel(__("Additional Parameters"))
-        self.pvtk_parameters_text = QtGui.QLineEdit()
+        self.pvtk_parameters_text = QtGui.QLineEdit("-vars:+press")
         self.pvtk_parameters_layout.addWidget(self.pvtk_parameters_label)
         self.pvtk_parameters_layout.addWidget(self.pvtk_parameters_text)
 
