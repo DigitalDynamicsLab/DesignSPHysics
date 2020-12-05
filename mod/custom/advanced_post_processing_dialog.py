@@ -8,10 +8,12 @@ import sys
 import time
 import datetime
 import shutil
+import subprocess
 
 import FreeCAD
 
 from mod import file_tools
+from mod.dialog_tools import warning_dialog
 from mod.dataobjects.case import Case
 from mod.executable_tools import ensure_process_is_executable_or_fail
 
@@ -40,11 +42,18 @@ class AdvancedPostProcessingDialog(QtGui.QDialog):
         self.cancel_button = QtGui.QPushButton("Cancel")
         self.settings_button = QtGui.QPushButton("Settings")
         
+        self.open_button = QtGui.QPushButton("Open..")
+        self.open_menu = QtGui.QMenu()
+        self.open_menu.aboutToShow.connect(self.on_show_menu)
+        self.open_menu.triggered.connect(self.on_open_files)
+        self.open_button.setMenu(self.open_menu)
+        
         self.buttons_layout = QtGui.QHBoxLayout()
         self.buttons_layout.addWidget(self.add_case_button)
         self.buttons_layout.addWidget(self.run_button)
         self.buttons_layout.addWidget(self.cancel_button)
         self.buttons_layout.addWidget(self.settings_button)
+        self.buttons_layout.addWidget(self.open_button)
         
         self.add_case_button.clicked.connect(self.on_add_case)
         self.run_button.clicked.connect(self.on_run_button)
@@ -131,6 +140,26 @@ class AdvancedPostProcessingDialog(QtGui.QDialog):
             
         self.show()
     
+    def on_show_menu(self):
+        self.open_menu.clear()
+        for name in os.listdir(Case.the().get_out_folder_path()):
+            path = os.path.join(Case.the().get_out_folder_path(),name)
+            if os.path.isdir(path):
+                for fname in os.listdir(path):
+                    if fname.endswith('.vtk'):
+                        self.open_menu.addAction(name)
+                        break
+        if self.open_menu.isEmpty():
+            self.open_menu.addAction('-')
+    
+    def on_open_files(self, action):
+        if action.text() != '-':        
+            for name in os.listdir(Case.the().get_out_folder_path()):
+                if name == action.text():
+                    path = os.path.join(Case.the().get_out_folder_path(),name)
+                    break       
+            subprocess.Popen([Case.the().executable_paths.paraview,"--data={}/{}_..vtk".format(path,name)])
+    
     def closeEvent(self,event):    
         CloseDialog(self,event)
         
@@ -209,7 +238,7 @@ class AdvancedPostProcessingDialog(QtGui.QDialog):
             path = os.path.abspath(FreeCAD.getUserAppDataDir() + 'Mod/DesignSPHysics/dualsphysics/bin/' + Case.the().executable_paths.partvtk.split('/')[-1])
             ensure_process_is_executable_or_fail(path)
             process_argv = ["-savevtk {}/{}.vtk".format(Case.the().pvparam.params["partfluid"],Case.the().pvparam.params["partfluid"]), 
-                            '-onlytype:-moving,-fixed', '-filexml dir/AUTO', '-vars:+idp']
+                            '-onlytype:-moving,-fixed', '-filexml dir/AUTO', '-vars:+idp,+press']
             process = self.process_init(path,process_argv,"PartFluid",case_line)
             process.finished.connect(lambda: self.partfixed(case_line))
         else:
@@ -248,7 +277,8 @@ class AdvancedPostProcessingDialog(QtGui.QDialog):
             dirin2 = Case.the().get_out_folder_path() + "/{}".format(Case.the().pvparam.params["isosurface"])
             process_argv = [Case.the().get_out_folder_path(), str(Case.the().dp), Case.the().postpro.mixingquality_coef_dp, 
                 str(Case.the().execution_parameters.timeout), Case.the().postpro.mixingquality_spec_dir,
-                Case.the().postpro.mixingquality_calc_type, Case.the().postpro.mixingquality_up_type, '0', 
+                Case.the().postpro.mixingquality_spec_div,
+                Case.the().postpro.mixingquality_calc_type, Case.the().postpro.mixingquality_up_type, Case.the().postpro.mixingquality_iso_type,'0', 
                 Case.the().postpro.mixingquality_timestep, Case.the().postpro.mixingquality_first_step, Case.the().postpro.mixingquality_1dim_div,
                 Case.the().postpro.mixingquality_2dim_div, Case.the().postpro.mixingquality_3dim_div,'1','1',Case.the().postpro.mixingquality_sub_dir]
             process = self.process_init(path,process_argv,"MixingQuality",case_line)
@@ -440,7 +470,6 @@ class AdvancedPostProSettings(QtGui.QDialog):
         self.mixingquality_spec_div.addItem("Linear")
         self.mixingquality_spec_div.addItem("Alternated")
         self.mixingquality_spec_div.setCurrentIndex(int(Case.the().postpro.mixingquality_spec_div))
-        self.mixingquality_spec_div.setDisabled(True)
        
         self.mixingquality_calc_type = QtGui.QComboBox()
         self.mixingquality_calc_type.addItem("Average")
@@ -458,6 +487,11 @@ class AdvancedPostProSettings(QtGui.QDialog):
         self.mixingquality_up_type.addItem("All")
         self.mixingquality_up_type.addItem("None")
         self.mixingquality_up_type.setCurrentIndex(int(Case.the().postpro.mixingquality_up_type))
+        
+        self.mixingquality_iso_type = QtGui.QComboBox()
+        self.mixingquality_iso_type.addItem("Disable")
+        self.mixingquality_iso_type.addItem("Enable")
+        self.mixingquality_iso_type.setCurrentIndex(int(Case.the().postpro.mixingquality_iso_type))
                 
         self.mixingquality_coef_dp = QtGui.QLineEdit(Case.the().postpro.mixingquality_coef_dp)
         
@@ -483,6 +517,7 @@ class AdvancedPostProSettings(QtGui.QDialog):
         label_layout.addWidget(QtGui.QLabel("Calculate indices:"))
         label_layout.addWidget(QtGui.QLabel("Radius dp coefficient:"))
         label_layout.addWidget(QtGui.QLabel("Update results:"))
+        label_layout.addWidget(QtGui.QLabel("Update IsoSurface files:"))
         label_layout.addWidget(QtGui.QLabel("Name for output subdirectory:"))
         
         mixingquality_layout = QtGui.QVBoxLayout()
@@ -498,6 +533,7 @@ class AdvancedPostProSettings(QtGui.QDialog):
         mixingquality_layout.addWidget(self.mixingquality_calc_type)
         mixingquality_layout.addWidget(self.mixingquality_coef_dp)
         mixingquality_layout.addWidget(self.mixingquality_up_type)
+        mixingquality_layout.addWidget(self.mixingquality_iso_type)
         mixingquality_layout.addWidget(self.mixingquality_sub_dir)
         layout = QtGui.QHBoxLayout()
         layout.addLayout(label_layout)
@@ -633,6 +669,7 @@ class AdvancedPostProSettings(QtGui.QDialog):
         Case.the().postpro.mixingquality_calc_type = str(self.mixingquality_calc_type.currentIndex())
         Case.the().postpro.mixingquality_coef_dp = self.mixingquality_coef_dp.text() 
         Case.the().postpro.mixingquality_up_type = str(self.mixingquality_up_type.currentIndex())
+        Case.the().postpro.mixingquality_iso_type = str(self.mixingquality_iso_type.currentIndex())
         Case.the().postpro.mixingquality_sub_dir = self.mixingquality_sub_dir.text()
         
         Case.the().postpro.computeforce_mk = self.computeforce_mk.text()
