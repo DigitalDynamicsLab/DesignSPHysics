@@ -34,6 +34,7 @@ from mod.dataobjects.relaxation_zone_irregular import RelaxationZoneIrregular
 from mod.dataobjects.relaxation_zone_file import RelaxationZoneFile
 from mod.dataobjects.relaxation_zone_uniform import RelaxationZoneUniform
 
+from mod.custom.liquid_sediment_dialog import LiquidSedimentParametersDialog
 from mod.custom.nn_parameters_dialog import NNParametersDialog
 from mod.custom.nn_parameters_wizard import NNParametersWizard
 
@@ -47,6 +48,7 @@ class SpecialOptionsSelectorDialog(QtGui.QDialog):
         self.setMinimumWidth(200)
         self.sp_window_layout = QtGui.QVBoxLayout()
          
+        self.sp_lsparameters_button = QtGui.QPushButton(__("Liquid-Sediment parameters"))
         self.sp_nnparameters_button = QtGui.QPushButton(__("Non newtonian parameters"))
         self.sp_damping_button = QtGui.QPushButton(__("New Damping Zone"))
         self.sp_inlet_button = QtGui.QPushButton(__("Inlet/Outlet"))
@@ -77,8 +79,10 @@ class SpecialOptionsSelectorDialog(QtGui.QDialog):
         self.sp_accinput_button.clicked.connect(self.on_accinput_button)
         self.sp_moorings_button.clicked.connect(self.on_moorings_button)
         self.sp_nnparameters_button.clicked.connect(self.on_nnparameters_button)        
+        self.sp_lsparameters_button.clicked.connect(self.on_lsparameters_button)        
         
         self.sp_window_layout.addWidget(self.sp_nnparameters_button)
+        self.sp_window_layout.addWidget(self.sp_lsparameters_button)
         self.sp_window_layout.addWidget(self.sp_damping_button)
         self.sp_window_layout.addWidget(self.sp_inlet_button)
         self.sp_window_layout.addWidget(self.sp_chrono_button)
@@ -88,21 +92,34 @@ class SpecialOptionsSelectorDialog(QtGui.QDialog):
         self.sp_window_layout.addWidget(self.sp_moorings_button)
 
         self.setLayout(self.sp_window_layout)
+    
+        try:
+            if not Case.the().executable_paths.supports_chrono():
+                self.sp_chrono_button.hide()
 
-        if not Case.the().executable_paths.supports_chrono():
+            if not Case.the().executable_paths.supports_moorings() and not ApplicationSettings.the().force_moordyn_support_enabled:
+                self.sp_moorings_button.hide()
+        except:
             self.sp_chrono_button.hide()
-
-        if not Case.the().executable_paths.supports_moorings() and not ApplicationSettings.the().force_moordyn_support_enabled:
             self.sp_moorings_button.hide()
-
-        self.exec_()
+        finally:
+            self.exec_()
+    
+    def on_lsparameters_button(self):
+        """ Defines lsparameters button behaviour"""
+        if Case.the().executable_paths.dsphysics.find('LiquidSediment') == -1:
+            warning_dialog(__("DualSPHysics executable is not set as Liquid-Sediment!"))
+        else:
+            LiquidSedimentParametersDialog(parent=get_fc_main_window())  
+            self.accept()
     
     def on_nnparameters_button(self):
         """ Defines nnparameters button behaviour"""
         if Case.the().executable_paths.dsphysics.find('NNewtonian') == -1:
             warning_dialog(__("DualSPHysics executable is not set as non newtonian!"))
-        NNParametersDialog(parent=get_fc_main_window())  
-        self.accept()
+        else:
+            NNParametersDialog(parent=get_fc_main_window())  
+            self.accept()
             
     def on_damping_option(self):
         """ Defines damping button behaviour"""
