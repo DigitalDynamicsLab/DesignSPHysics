@@ -26,6 +26,7 @@ from mod.dataobjects.moorings.moorings_configuration import MooringsConfiguratio
 
 from mod.custom.postpro import PostPro
 from mod.custom.paraview.pv_param import PvParam
+from mod.custom.lsparam import LsParam
 
 class Case():
     """ Main data structure for the data inside a case properties, objects
@@ -61,6 +62,7 @@ class Case():
         self.chrono: ChronoConfig = ChronoConfig()
         self.postpro: PostPro = PostPro()
         self.pvparam: PvParam = PvParam()
+        self.lsparam: LsParam = LsParam()
 
     @staticmethod
     def the() -> "Case":
