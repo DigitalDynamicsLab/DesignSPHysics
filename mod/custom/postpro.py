@@ -1,9 +1,9 @@
 #!/usr/bin/env python3.7
 # -*- coding: utf-8 -*-
-""" DesignSPHysics case pospro dataobject """
+""" DesignSPHysics case Post Processing parameters dataobject """
 
 class PostPro():
-    """ DualSPHysics case postpro definition dataobject. """
+    """ DualSPHysics case Post Processing parameters dataobject. """
 
     def __init__(self):
         self.mixingquality_timestep = '1'
@@ -17,6 +17,7 @@ class PostPro():
         self.mixingquality_spec_div = '0'        
         self.mixingquality_calc_type = '0'
         self.mixingquality_up_type = '0'
+        self.mixingquality_iso_type = '0'
         self.mixingquality_coef_dp = '2'
         self.mixingquality_sub_dir = ''
         
