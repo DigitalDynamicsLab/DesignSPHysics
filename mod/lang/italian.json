@@ -509,5 +509,8 @@
     "Select or create a movement to edit its properties": "Select or create a movement to edit its properties",
     "Add all possible objects to DSPH Simulation": "Add all possible objects to DSPH Simulation",
     "There was an error loading the case": "There was an error loading the case",
-    "The case you are trying to load has some data that DesignSPHysics could not load.\n\nDid you make the case in a previous version?": "The case you are trying to load has some data that DesignSPHysics could not load.\n\nDid you make the case in a previous version?"
+    "The case you are trying to load has some data that DesignSPHysics could not load.\n\nDid you make the case in a previous version?": "The case you are trying to load has some data that DesignSPHysics could not load.\n\nDid you make the case in a previous version?",
+    "Liquid-Sediment parameters": "Liquid-Sediment parameters",
+    "DualSPHysics executable is not set as Liquid-Sediment!": "DualSPHysics executable is not set as Liquid-Sediment!",
+    "Resume simulation": "Resume simulation"
 }
