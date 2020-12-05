@@ -148,7 +148,10 @@ class ExecutionParametersDialog(QtGui.QDialog):
         self.densitydt_type_layout = QtGui.QHBoxLayout()
         self.densitydt_type_label = QtGui.QLabel(__("Density Diffusion Term:"))
         self.densitydt_type_input = QtGui.QComboBox()
-        densitydt_option_list = [__('None'), __('Molteni'), __('Fourtakas'), __('Fourtakas (Full)')] if Case.the().executable_paths.supports_ddt_fourtakas() else ['None', 'Molteni']
+        try:
+            densitydt_option_list = [__('None'), __('Molteni'), __('Fourtakas'), __('Fourtakas (Full)')] if Case.the().executable_paths.supports_ddt_fourtakas() else ['None', 'Molteni']
+        except:
+            densitydt_option_list = [__('None')]
         self.densitydt_type_input.insertItems(0, densitydt_option_list)
         self.densitydt_type_input.setCurrentIndex(Case.the().execution_parameters.densitydt_type)
         self.densitydt_type_input.currentIndexChanged.connect(self.on_densitydt_type_change)
