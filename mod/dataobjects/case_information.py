@@ -24,6 +24,7 @@ class CaseInformation():
         self.global_movements: list = list()  # [Movement]
         self.global_materials: list = list()  # [MaterialProperty]
         self.last_used_directory: str = str(Path.home())
+        self.liquidsediment_phase_list_exists: bool = False
 
         self.load_default_materials()
 
