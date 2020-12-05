@@ -28,6 +28,7 @@ from mod.widgets.case_summary import CaseSummary
 from mod.dataobjects.case import Case
 from mod.dataobjects.simulation_object import SimulationObject
 
+from mod.custom.liquid_sediment_parameters_wizard import LiquidSedimentXMLWizard
 from mod.custom.nn_parameters_wizard import NNParametersWizard
 
 class DockPreProcessingWidget(QtGui.QWidget):
@@ -241,7 +242,10 @@ class DockPreProcessingWidget(QtGui.QWidget):
                 total_particles_text = output[output.index("Total particles: "):output.index(" (bound=")]
                 total_particles = int(total_particles_text[total_particles_text.index(": ") + 2:])
                 Case.the().info.particle_number = total_particles
-                if Case.the().executable_paths.dsphysics.find('NNewtonian') != -1:
+                if Case.the().executable_paths.dsphysics.find('LiquidSediment') != -1:
+                   if Case.the().info.liquidsediment_phase_list_exists:
+                      LiquidSedimentXMLWizard()
+                elif Case.the().executable_paths.dsphysics.find('NNewtonian') != -1:
                    if NNParametersWizard().nn_options_xml_exists:
                       NNParametersWizard().update_nn_parameters()
                 GencaseCompletedDialog(particle_count=total_particles, detail_text=output, cmd_string=cmd_string, parent=get_fc_main_window()).show()
