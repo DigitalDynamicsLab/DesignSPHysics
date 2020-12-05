@@ -55,6 +55,7 @@ class DockSimulationWidget(QtGui.QWidget):
         
         self.utilities_button = QtGui.QPushButton(__("Utilities"))
         self.utilities_menu = QtGui.QMenu()
+        self.utilities_menu.addAction(__("Resume simulation"))
         self.utilities_menu.addAction(__("Iterate"))
         self.utilities_menu.addAction(__("Additional parameters"))
         self.utilities_menu.addAction(__("View run summary "))
@@ -72,18 +73,16 @@ class DockSimulationWidget(QtGui.QWidget):
         self.setLayout(self.main_layout)
     
     def on_utilities_menu(self,action):
-        if __("Iterate") in action.text():
-            self.on_ex_iterate_dialog()
+        if __("Resume simulation") in action.text():
+            self.on_ex_simulate(True)
+        elif __("Iterate") in action.text():
+            IterateDialog(parent=self,device_selector = self.device_selector)
         elif __("Additional parameters") in action.text():
             self.on_additional_parameters()
         elif __("View run summary") in action.text():
             RunSummaryDialog(Case.the().get_out_folder_path() + '/run.out',self)
-        
-        
-    def on_ex_iterate_dialog(self):
-        self.iterate_dialog = IterateDialog(parent=self,device_selector = self.device_selector)
     
-    def on_ex_simulate(self):
+    def on_ex_simulate(self,resume = False):
         """ Defines what happens on simulation button press.
             It shows the run window and starts a background process with dualsphysics running. Updates the window with useful info."""
 
@@ -97,10 +96,26 @@ class DockSimulationWidget(QtGui.QWidget):
                              Case.the().get_out_folder_path(),
                              "-{device}".format(device=self.device_selector.currentText().lower()),
                              "-svres"]
-
-        additional_parameters = list()
-        if Case.the().info.run_additional_parameters:
-            additional_parameters = Case.the().info.run_additional_parameters.split(" ")
+        def get_last_valid_part():
+            last_num = 0
+            for filename in os.listdir(Case.the().get_out_folder_path()):
+                if filename.endswith(".bi4") and filename.find("Part_") != -1:
+                    last_num += 1
+            return "Part_{}".format('{:04d}'.format(last_num - 1))
+        
+        def get_first_new_part():
+            last_num = 0
+            for filename in os.listdir(Case.the().get_out_folder_path()):
+                if filename.endswith(".bi4") and filename.find("Part_") != -1:
+                    last_num += 1
+            return "Part_{}".format('{:04d}'.format(last_num))
+            
+        if resume == False:
+            additional_parameters = list()
+            if Case.the().info.run_additional_parameters:
+                additional_parameters = Case.the().info.run_additional_parameters.split(" ")
+        else:
+            additional_parameters = ["-partbegin:{begin}[:{first}] {dirin}".format(begin = get_last_valid_part(), first = get_first_new_part(), dirin = Case.the().get_out_folder_path())]
 
         final_params_ex = static_params_exe + additional_parameters
         cmd_string = "{} {}".format(Case.the().executable_paths.dsphysics, " ".join(final_params_ex))
@@ -166,7 +181,12 @@ class DockSimulationWidget(QtGui.QWidget):
         process.finished.connect(on_dsph_sim_finished)
 
         ensure_process_is_executable_or_fail(Case.the().executable_paths.dsphysics)
-        process.start(Case.the().executable_paths.dsphysics, final_params_ex)
+        if Case.the().executable_paths.dsphysics.find('LiquidSediment') == -1:
+            process.start(Case.the().executable_paths.dsphysics, final_params_ex)
+        else:
+            final_params_ex = ["-{device}".format(device=self.device_selector.currentText().lower()), "{name}".format(name=Case.the().get_out_xml_file_path()), 
+                                "{dirout}".format(dirout=Case.the().get_out_folder_path())]
+            process.start(Case.the().executable_paths.dsphysics, final_params_ex)
 
         def on_fs_change():
             """ Executed each time the filesystem changes. This updates the percentage of the simulation and its details."""
