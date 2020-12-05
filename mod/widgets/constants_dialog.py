@@ -372,8 +372,8 @@ class ConstantsDialog(QtGui.QDialog):
         self.cw_main_layout = QtGui.QVBoxLayout()
 
         # Lattice was removed on 0.3Beta - 1 of June
-        # self.cw_main_layout.addLayout(self.lattice_layout)
-        # self.cw_main_layout.addLayout(self.lattice2_layout)
+        self.cw_main_layout.addLayout(self.lattice_layout)
+        self.cw_main_layout.addLayout(self.lattice2_layout)
         self.cw_main_layout.addLayout(self.gravity_layout)
         self.cw_main_layout.addLayout(self.rhop0_layout)
         self.cw_main_layout.addLayout(self.hswlauto_layout)
