@@ -24,10 +24,10 @@ from mod.constants import VERSION
 
 from mod.dataobjects.case import Case
 
-from mod.custom.nn_parameters_wizard import NNParametersWizard
-
 from mod.widgets.gencase_completed_dialog import GencaseCompletedDialog
 from mod.widgets.run_dialog import RunDialog
+
+from mod.custom.nn_parameters_wizard import NNParametersWizard
 
 class IterateDialog(QtGui.QDialog):
     
