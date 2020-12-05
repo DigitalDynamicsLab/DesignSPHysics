@@ -1,0 +1,11 @@
+<execution>
+	<eps value="KKK" />
+	<parameter key="DeltaSPH" value="ZZZ" comment="DeltaSPH parameter, 0 not applied (def=0.1)" />            
+	<parameter key="DtIni" value="ZZZ" comment="Initial time step" />
+	<parameter key="DtMin" value="ZZZ" comment="Minimum time step (def=0.00001)" />
+	<parameter key="TimeMax" value="ZZZ" comment="Time of simulation" />
+	<parameter key="TimeOut" value="ZZZ" comment="Time out data" />
+	<parameter key="IncZ" value="ZZZ" comment="Increase of Z+" />
+	<parameter key="PartsOutMax" value="ZZZ" comment="Proportion of fluid particles out allowed (def=1)" />
+	<parameter key="PhaseCount" value="ZZZ" comment="Number of different fluids" />
+</execution>

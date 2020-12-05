@@ -1,0 +1,14 @@
+<phase>
+	<parameter key="PhaseMkFluid_XXX" value="YYY" comment="MkFluid of phase" />
+	<parameter key="PhaseRhop0_XXX" value="YYY" comment="Rhop value for phase" />
+	<parameter key="PhaseCsound_XXX" value="YYY" comment="Csound value for phase" />
+	<parameter key="PhaseGamma_XXX" value="YYY" comment="Gamma value for phase" />
+	<parameter key="PhaseVisco_XXX" value="YYY" comment="Viscosity value for phase" />           
+	<parameter key="HB_parameter_XXX" value="YYY" comment="Use 1 to reduce to Bingham for Newtonian liquid" />
+	<parameter key="HB_Papanastasiou_XXX" value="YYY" comment="Use 0 to reduce to HB for Newtonian liquid" />
+	<parameter key="Coh_XXX" value="YYY" comment="Cohesion coefficient of the phase" />
+	<parameter key="PhiF_XXX" value="YYY" comment="Internal friction angle of the phase" />
+	<parameter key="YieldStrength_XXX" value="YYY" comment="Yield strength of phase if constant Yield strength is being used (def=0)" />
+	<parameter key="Phase_XXX" value="YYY" comment="Newtonian=0, Non-Newtonian" />	    
+</phase>
+
